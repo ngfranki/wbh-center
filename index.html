@@ -571,8 +571,8 @@
     fetch(SB+'/rest/v1/wbh_board?id=eq.main&select=state,updated_at', {
       headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY}
     }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(rows){ cb(rows && rows[0] ? rows[0] : null); })
-      .catch(function(){ cb(null); });
+      .then(function(rows){ cb(rows && rows[0] ? rows[0] : null, true); })
+      .catch(function(){ cb(null, false); });
   }
 
   function refreshIfChanged(){
@@ -694,13 +694,17 @@
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
     setSync('', '載緊資料…');
-    fetchBoard(function(row){
+    fetchBoard(function(row, reached){
       if(!row){
+        if(!reached){
+          setSync('err', '連緊……（網絡慢，幾秒後自動再試）');
+          setTimeout(boot, 4000);
+          return;
+        }
         try{ localStorage.removeItem('boardKey'); }catch(e){}
         BKEY = '';
-        if(askKey('暗號唔啱或者斷線——再入一次')){ boot(); return; }
-        setSync('err', '連唔到——刷新再試');
-        $('banner').classList.add('show');
+        if(askKey('暗號唔啱——再入一次')){ boot(); return; }
+        setSync('err', '要暗號先開到——刷新再入');
         return;
       }
       applyState(row);
