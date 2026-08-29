@@ -77,15 +77,14 @@
     margin-left:6px; opacity:.85;
   }
   .view{display:none}
-  .social-bar{display:flex; align-items:center; gap:10px; margin:0 2px 10px; flex-wrap:wrap}
+  .social-card{padding:30px 22px; text-align:center}
+  .social-title{font-family:'Noto Serif TC',serif; font-weight:700; font-size:20px; margin-bottom:6px}
+  .social-sub{font-size:13px; color:var(--muted); letter-spacing:.08em; margin-bottom:22px}
   .social-open{
     display:inline-block; background:var(--accent); color:var(--on-accent); text-decoration:none;
-    font-weight:700; font-size:14px; padding:9px 16px; border-radius:10px;
+    font-weight:700; font-size:16px; padding:14px 28px; border-radius:12px;
   }
-  .social-frame-wrap{padding:0; overflow:hidden}
-  .social-frame{
-    display:block; width:100%; height:70vh; min-height:420px; border:0; background:var(--card);
-  }
+  .social-note{font-size:12px; color:var(--muted); line-height:1.7; margin-top:20px}
   .view.on{display:block}
   section{margin-top:22px}
   h2{
@@ -271,13 +270,12 @@
 
   <div class="view" id="viewSocial">
     <section>
-      <h2>社群排程中心 <span class="count">social.wholistic-bh.com</span></h2>
-      <div class="social-bar">
-        <a class="social-open" href="https://social.wholistic-bh.com" target="_blank" rel="noopener">喺新分頁開 ↗</a>
-        <span class="stamp">載唔到／要登入就撳左邊個掣</span>
-      </div>
-      <div class="card social-frame-wrap">
-        <iframe id="socialFrame" class="social-frame" src="about:blank" title="社群排程中心"></iframe>
+      <h2>社群排程中心</h2>
+      <div class="card social-card">
+        <div class="social-title">📣 社群排程中心</div>
+        <div class="social-sub">出帖排程・貼文佇列・發佈紀錄</div>
+        <a class="social-open" href="https://social.wholistic-bh.com" target="_blank" rel="noopener">開啟社群排程中心 ↗</a>
+        <div class="social-note">iPhone 唔畀後台喺 app 入面記住登入，所以呢度用新視窗開——登入一次就會記住。</div>
       </div>
     </section>
   </div>
@@ -347,16 +345,11 @@
   // ---------- 版面切換 ----------
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial']};
-  var socialLoaded = false;
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
       $(VIEWS[k][1]).classList.toggle('on', k===v);
     });
-    if(v === 'social' && !socialLoaded){
-      socialLoaded = true;
-      try{ $('socialFrame').src = 'https://social.wholistic-bh.com'; }catch(e){}
-    }
     try{ localStorage.setItem('view', v); }catch(e){}
   }
   $('tabSched').addEventListener('click', function(){ setView('sched'); });
