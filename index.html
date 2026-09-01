@@ -596,6 +596,7 @@
       .then(function(rows){
         dirty = false;
         if(rows && rows[0]) lastUpdated = rows[0].updated_at;
+        cacheSave({state:state, updated_at:lastUpdated});
         setSync('ok', '已儲低 '+new Date().toTimeString().slice(0,5));
       })
       .catch(function(){
@@ -614,18 +615,39 @@
     lastUpdated = row.updated_at;
   }
 
+  function cacheSave(row){
+    try{ localStorage.setItem('boardCache', JSON.stringify(row)); }catch(e){}
+  }
+  function cacheLoad(){
+    try{ var s = localStorage.getItem('boardCache'); return s ? JSON.parse(s) : null; }catch(e){ return null; }
+  }
+
   function fetchBoard(cb){
+    var done = false, ctrl = null;
+    try{ ctrl = new AbortController(); }catch(e){}
+    var timer = setTimeout(function(){
+      if(done) return; done = true;
+      try{ ctrl && ctrl.abort(); }catch(e){}
+      cb(null, false);
+    }, 12000);
     fetch(SB+'/rest/v1/wbh_board?id=eq.main&select=state,updated_at', {
-      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY}
+      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY},
+      signal: ctrl ? ctrl.signal : undefined
     }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(rows){ cb(rows && rows[0] ? rows[0] : null, true); })
-      .catch(function(){ cb(null, false); });
+      .then(function(rows){
+        if(done) return; done = true; clearTimeout(timer);
+        cb(rows && rows[0] ? rows[0] : null, true);
+      })
+      .catch(function(){
+        if(done) return; done = true; clearTimeout(timer);
+        cb(null, false);
+      });
   }
 
   function refreshIfChanged(){
     if(dirty || editing || armedDel || !state) return;
     fetchBoard(function(row){
-      if(row && row.updated_at !== lastUpdated){ applyState(row); render(); }
+      if(row && row.updated_at !== lastUpdated){ applyState(row); cacheSave(row); render(); }
     });
   }
 
@@ -738,14 +760,22 @@
   var startView = 'sched';
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
   setView(['sched','tasks','notes','social'].indexOf(startView) >= 0 ? startView : 'sched');
+  var retryTimer = null;
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
-    setSync('', '載緊資料…');
+    if(!state){
+      var cached = cacheLoad();
+      if(cached && cached.state){
+        applyState(cached); render();
+        setSync('', '上次嘅資料·更新緊…');
+      } else setSync('', '載緊資料…');
+    } else setSync('', '更新緊…');
     fetchBoard(function(row, reached){
       if(!row){
         if(!reached){
-          setSync('err', '連緊……（網絡慢，幾秒後自動再試）');
-          setTimeout(boot, 4000);
+          setSync('err', '連唔到 — 撳呢行重試');
+          if(retryTimer) clearTimeout(retryTimer);
+          retryTimer = setTimeout(boot, 8000);
           return;
         }
         try{ localStorage.removeItem('boardKey'); }catch(e){}
@@ -754,11 +784,16 @@
         setSync('err', '要暗號先開到——刷新再入');
         return;
       }
-      applyState(row);
+      applyState(row); cacheSave(row);
       setSync('ok', '同步已接通');
       render();
     });
   }
+  try{
+    var syncEl = document.querySelector('.sync');
+    syncEl.style.cursor = 'pointer';
+    syncEl.addEventListener('click', function(){ if(retryTimer) clearTimeout(retryTimer); boot(); });
+  }catch(e){}
   boot();
   setInterval(refreshIfChanged, 5000);
   document.addEventListener('visibilitychange', function(){
