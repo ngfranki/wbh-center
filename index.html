@@ -85,6 +85,13 @@
     font-weight:700; font-size:16px; padding:14px 28px; border-radius:12px;
   }
   .social-note{font-size:12px; color:var(--muted); line-height:1.7; margin-top:20px}
+  .social-try{
+    display:block; margin:14px auto 0; border:1px solid var(--line); background:transparent;
+    color:var(--muted); font-family:inherit; font-size:13px; padding:8px 16px;
+    border-radius:9px; cursor:pointer;
+  }
+  .social-frame-wrap{padding:0; overflow:hidden; margin-top:12px}
+  .social-frame{display:block; width:100%; height:70vh; min-height:420px; border:0; background:var(--card)}
   .view.on{display:block}
   section{margin-top:22px}
   h2{
@@ -275,7 +282,11 @@
         <div class="social-title">📣 社群排程中心</div>
         <div class="social-sub">出帖排程・貼文佇列・發佈紀錄</div>
         <a class="social-open" href="https://social.wholistic-bh.com" target="_blank" rel="noopener">開啟社群排程中心 ↗</a>
-        <div class="social-note">iPhone 唔畀後台喺 app 入面記住登入，所以呢度用新視窗開——登入一次就會記住。</div>
+        <div class="social-note">iPhone 唔畀後台喺 app 入面記住登入，所以預設用新視窗開——登入一次就會記住。</div>
+        <button class="social-try" id="socialTry">已經登入咗？試下喺呢度載入 ⤵</button>
+      </div>
+      <div class="card social-frame-wrap" id="socialFrameWrap" style="display:none">
+        <iframe id="socialFrame" class="social-frame" src="about:blank" title="社群排程中心"></iframe>
       </div>
     </section>
   </div>
@@ -356,6 +367,18 @@
   $('tabTasks').addEventListener('click', function(){ setView('tasks'); });
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
+  $('socialTry').addEventListener('click', function(){
+    var w = $('socialFrameWrap');
+    if(w.style.display === 'none'){
+      w.style.display = 'block';
+      $('socialFrame').src = 'https://social.wholistic-bh.com?t=' + Date.now();
+      this.textContent = '收埋 ⤴';
+    } else {
+      w.style.display = 'none';
+      $('socialFrame').src = 'about:blank';
+      this.textContent = '已經登入咗？試下喺呢度載入 ⤵';
+    }
+  });
 
   // ---------- render ----------
   function fmtHeader(){
