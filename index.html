@@ -201,6 +201,20 @@
   .weekly-item:first-child{border-top:none}
   .weekly-wk{font-weight:700; color:var(--accent); font-size:13px; margin-bottom:3px}
   .foot{margin-top:30px; font-size:12px; color:var(--muted); text-align:center; line-height:1.8}
+  .past-link{
+    display:block; width:100%; margin-top:10px; border:1px solid var(--line);
+    background:var(--card); color:var(--muted); font-family:inherit; font-size:13px;
+    padding:11px; border-radius:12px; cursor:pointer;
+  }
+  .back-link{
+    border:none; background:none; color:var(--accent); font-family:inherit;
+    font-size:14px; font-weight:700; padding:0 0 10px; cursor:pointer;
+  }
+  .day-group{
+    font-size:12px; color:var(--muted); letter-spacing:.15em; font-weight:700;
+    padding:12px 14px 2px; border-top:1px solid var(--line);
+  }
+  .card > .day-group:first-child{border-top:none}
   .more-btn{
     display:block; width:100%; border:none; background:none; color:var(--accent);
     font-family:inherit; font-size:13px; padding:10px; cursor:pointer; border-top:1px solid var(--line);
@@ -265,8 +279,9 @@
       <div class="card" id="todoList"></div>
     </section>
     <section>
-      <h2>完成咗 <span class="count" id="doneCount"></span></h2>
+      <h2>今日完成 <span class="count" id="doneCount"></span></h2>
       <div class="card" id="doneList"></div>
+      <button class="past-link" id="pastLink" style="display:none"></button>
     </section>
   </div>
 
@@ -278,6 +293,14 @@
     <section>
       <h2>傾過嘅嘢 <span class="count">Eva 每個 session 幫你記</span></h2>
       <div class="card" id="notesList"></div>
+    </section>
+  </div>
+
+  <div class="view" id="viewDone">
+    <section>
+      <button class="back-link" id="backToTasks">← 返「任務」</button>
+      <h2>已完成 <span class="count" id="pastCount"></span></h2>
+      <div class="card" id="pastList"></div>
     </section>
   </div>
 
@@ -361,11 +384,13 @@
 
   // ---------- 版面切換 ----------
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
-               notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial']};
+               notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
+               done:['viewDone', null]};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
-      $(VIEWS[k][1]).classList.toggle('on', k===v);
+      var tb = VIEWS[k][1];
+      if(tb) $(tb).classList.toggle('on', k===v || (v==='done' && k==='tasks'));
     });
     try{ localStorage.setItem('view', v); }catch(e){}
   }
@@ -373,6 +398,8 @@
   $('tabTasks').addEventListener('click', function(){ setView('tasks'); });
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
+  $('pastLink').addEventListener('click', function(){ setView('done'); window.scrollTo(0,0); });
+  $('backToTasks').addEventListener('click', function(){ setView('tasks'); window.scrollTo(0,0); });
   $('socialTry').addEventListener('click', function(){
     var w = $('socialFrameWrap');
     if(w.style.display === 'none'){
@@ -436,14 +463,36 @@
     $('todoList').innerHTML = h;
     $('todoCount').textContent = todos.length ? todos.length+' 項' : '';
 
-    var shown = showAllDone ? dones : dones.slice(0,12);
-    var dh = dones.length
-      ? shown.map(function(t){ return taskRow(t, today); }).join('') +
-        (dones.length > 12 && !showAllDone
-          ? '<button class="more-btn" data-act="more">顯示全部 '+dones.length+' 項</button>' : '')
-      : '<div class="empty">未有完成紀錄</div>';
-    $('doneList').innerHTML = dh;
-    $('doneCount').textContent = dones.length ? dones.length+' 項' : '';
+    // 今日完成 vs 之前完成
+    var doneToday = dones.filter(function(t){ return t.doneAt === today; });
+    var donePast  = dones.filter(function(t){ return t.doneAt !== today; });
+
+    $('doneList').innerHTML = doneToday.length
+      ? doneToday.map(function(t){ return taskRow(t, today); }).join('')
+      : '<div class="empty">今日仲未有完成紀錄</div>';
+    $('doneCount').textContent = doneToday.length ? doneToday.length+' 項' : '';
+
+    var pl = $('pastLink');
+    if(donePast.length){
+      pl.style.display = 'block';
+      pl.textContent = '睇返之前完成嘅 ' + donePast.length + ' 項 →';
+    } else pl.style.display = 'none';
+
+    // 已完成版：按日期分組
+    var groups = {};
+    donePast.forEach(function(t){
+      var k = t.doneAt || '（冇日期）';
+      (groups[k] = groups[k] || []).push(t);
+    });
+    var keys = Object.keys(groups).sort().reverse();
+    $('pastList').innerHTML = keys.length
+      ? keys.map(function(k){
+          var label = k === '（冇日期）' ? k : nw(mmdd(k)) + '（' + WEEK[new Date(k+'T12:00:00').getDay()] + '）';
+          return '<div class="day-group">'+label+'</div>' +
+                 groups[k].map(function(t){ return taskRow(t, today); }).join('');
+        }).join('')
+      : '<div class="empty">未有紀錄</div>';
+    $('pastCount').textContent = donePast.length ? donePast.length+' 項' : '';
 
     renderSched(today);
     renderNotes();
@@ -765,6 +814,7 @@
   setInterval(function(){ try{ $('dateLine').innerHTML = fmtHeader(); }catch(e){} }, 20000);
   var startView = 'sched';
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
+  if(startView === 'done') startView = 'tasks';
   setView(['sched','tasks','notes','social'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   function boot(){
