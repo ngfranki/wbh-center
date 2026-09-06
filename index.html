@@ -457,7 +457,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.4</span></div>
 </div>
 
 <div class="capture">
@@ -861,7 +861,6 @@
     if(moneyOpen) renderMoney();
     renderAds();
     try{ renderNotes(); }catch(e){}
-    renderNotes();
 
     // 掛返 editor 嘅初始值
     if(editing){
@@ -877,7 +876,9 @@
       if(t.plan && t.plan.status === 'added'){
         metas.push('<button class="chip on" data-act="edit-plan" data-id="'+t.id+'">📅 '+nw(mmdd(t.plan.date))+(t.plan.time?' '+nw(t.plan.time):'')+' 已入日曆</button>');
       } else if(t.plan && t.plan.status === 'pending'){
-        metas.push('<button class="chip cal-pending" data-act="edit-plan" data-id="'+t.id+'">⏳ '+nw(mmdd(t.plan.date))+(t.plan.time?' '+nw(t.plan.time):'')+' 等 Eva 入日曆</button>');
+        var late = t.plan.date < today;
+        metas.push('<button class="chip cal-pending" data-act="edit-plan" data-id="'+t.id+'">⏳ '+nw(mmdd(t.plan.date))+(t.plan.time?' '+nw(t.plan.time):'')+(late?' 過咗・未入到日曆':' 等 Eva 入日曆')+'</button>');
+        metas.push('<a class="chip" href="'+gcalLink(t)+'" target="_blank" rel="noopener" style="text-decoration:none">📅 自己入 Google 日曆</a>');
       } else {
         metas.push('<button class="chip" data-act="edit-plan" data-id="'+t.id+'">＋入日曆</button>');
       }
@@ -912,6 +913,17 @@
     return html;
   }
 
+  // Google 日曆「加事件」連結：撳落去一步就入到，唔使等 Eva
+  function gcalLink(t){
+    var d = (t.plan && t.plan.date) || localDateStr(new Date());
+    var tm = (t.plan && t.plan.time) || '09:00';
+    var mins = t.mins || 30;
+    var s = new Date(d+'T'+tm+':00');
+    var e = new Date(s.getTime() + mins*60000);
+    function f(x){ return x.getFullYear()+pad(x.getMonth()+1)+pad(x.getDate())+'T'+pad(x.getHours())+pad(x.getMinutes())+'00'; }
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t.text)+
+           '&dates='+f(s)+'/'+f(e)+'&ctz=Asia/Hong_Kong&details='+encodeURIComponent('由戰略中心排入');
+  }
   function editorRow(t){
     var today = localDateStr(new Date());
     if(editing.kind === 'plan'){
@@ -939,8 +951,9 @@
     });
     state.tasks.forEach(function(t){
       if(t.done) return;
-      if(t.plan && t.plan.status === 'pending' && t.plan.date >= today){
-        push(t.plan.date, {kind:'plan', t:t.text, mins:t.mins, time:t.plan.time});
+      if(t.plan && t.plan.status === 'pending'){
+        var late = t.plan.date < today;
+        push(late ? today : t.plan.date, {kind:'plan', t:t.text, mins:t.mins, time:t.plan.time, late:late, od:t.plan.date});
       }
       if(t.due){
         push(t.due < today ? today : t.due, {kind:'due', t:t.text, over: t.due < today});
@@ -967,7 +980,7 @@
             '<span class="ev-tag">'+esc(it.cal||'')+'</span></div></div>';
         }
         if(it.kind==='plan'){
-          return '<div class="ev"><div class="ev-time">'+(it.time?esc(it.time)+' ⏳':'待 Eva 排')+'</div>'+
+          return '<div class="ev"><div class="ev-time">'+(it.late?'過咗 '+nw(mmdd(it.od)):(it.time?esc(it.time)+' ⏳':'待 Eva 排'))+'</div>'+
             '<div class="ev-card plan">☐ '+esc(it.t)+(it.mins?'（'+it.mins+'分）':'')+
             '<span class="ev-tag">任務</span></div></div>';
         }
@@ -1028,17 +1041,56 @@
   function persist(){
     if(!state) return;
     fetchBoard(function(row, reached){
-      if(row && row.state){
-        // 🔴 保住手上未處理嘅下拉請求，唔好俾後台版本冚走（v6.3）
-        var myReq = state.ads && state.ads.req;
-        if(row.state.ads){
-          state.ads = row.state.ads;
-          if(myReq && tsOf(myReq) > tsOf(state.ads.updatedAt)) state.ads.req = myReq;
-        }
-        if(row.state.intel) state.intel = row.state.intel;
-      }
+      if(row && row.state) state = mergeRemote(state, row.state);
       doPersist();
     });
+  }
+
+  // 🔴 v6.4 合併規則：寫入前攞後台最新版做底，只疊自己改過嘅嘢上去——
+  //   後台擁有：ads／intel／events／meta（永遠用後台）
+  //   共同擁有：tasks（逐項按 id 合併，邊個改得新邊個贏；Eva 推進咗嘅狀態一律吸收）
+  //             notes／weekly（聯集，唔會冚走 Eva 寫嘅紀錄）
+  //   本機擁有：income（只有 app 會改）
+  function touch(t){ t.m = Date.now(); }
+  function mergeRemote(local, remote){
+    var out = JSON.parse(JSON.stringify(remote || {}));
+    ['tasks','events','notes','weekly'].forEach(function(k){ if(!Array.isArray(out[k])) out[k] = []; });
+    if(!out.meta) out.meta = {};
+    // ads：後台為準，但保住自己未處理嘅下拉請求
+    var myReq = local.ads && local.ads.req;
+    if(!out.ads) out.ads = local.ads || {};
+    if(myReq && tsOf(myReq) > tsOf(out.ads.updatedAt)) out.ads.req = myReq;
+    if(!out.intel && local.intel) out.intel = local.intel;
+    // income：本機為準
+    if(local.income) out.income = local.income;
+    // tombstones：本機刪咗嘅 task，後台再出現都唔要（7 日內）
+    var tomb = (local.tomb || []).filter(function(x){ return Date.now() - x.t < 7*864e5; });
+    var tombIds = {}; tomb.forEach(function(x){ tombIds[x.id] = 1; });
+    out.tomb = tomb;
+    // tasks
+    var rmap = {}; out.tasks.forEach(function(t){ rmap[t.id] = t; });
+    var lmap = {}; (local.tasks || []).forEach(function(t){ lmap[t.id] = t; });
+    var merged = [];
+    (local.tasks || []).forEach(function(lt){
+      var rt = rmap[lt.id];
+      if(!rt){ merged.push(lt); return; }                // 本機新加（或後台未見）→ 保留
+      var pick = (rt.m && lt.m && rt.m > lt.m) ? JSON.parse(JSON.stringify(rt)) : JSON.parse(JSON.stringify(lt));
+      // Eva 推進咗嘅狀態一律吸收（唔好俾手上舊 pending 冚返轉頭）
+      if(rt.plan && rt.plan.status === 'added' && pick.plan && pick.plan.status === 'pending' && rt.plan.date === pick.plan.date) pick.plan = rt.plan;
+      if(rt.ming && rt.ming.status === 'sent' && pick.ming && pick.ming.status === 'pending') pick.ming = rt.ming;
+      if(rt.via && !pick.via) pick.via = rt.via;
+      merged.push(pick);
+    });
+    // 後台有、本機冇（Telegram／曉明加嘅）→ 放最頂，除非係本機啱啱刪咗
+    var fresh = out.tasks.filter(function(t){ return !lmap[t.id] && !tombIds[t.id]; });
+    out.tasks = fresh.concat(merged);
+    // notes／weekly 聯集
+    var seen = {};
+    out.notes.forEach(function(n){ seen[n.d+'|'+n.text] = 1; });
+    (local.notes || []).forEach(function(n){ if(!seen[n.d+'|'+n.text]){ out.notes.push(n); seen[n.d+'|'+n.text] = 1; } });
+    var wk = {}; out.weekly.forEach(function(w){ wk[w.wk] = 1; });
+    (local.weekly || []).forEach(function(w){ if(!wk[w.wk]) out.weekly.push(w); });
+    return out;
   }
 
   function tsOf(x){ var t = x ? Date.parse(x) : 0; return isNaN(t) ? 0 : t; }
@@ -1155,6 +1207,7 @@
     var t = id ? findTask(id) : null;
     if(!t){ return; }
 
+    if(act !== 'edit-plan') touch(t);
     if(act === 'tick'){
       t.done = !t.done;
       t.doneAt = t.done ? localDateStr(new Date()) : null;
@@ -1169,6 +1222,7 @@
       if(armedDel === t.id){
         disarmDel();
         state.tasks = state.tasks.filter(function(x){ return x.id !== t.id; });
+        (state.tomb = state.tomb || []).push({id:t.id, t:Date.now()});
         editing = null;
         render(); schedulePersist();
       } else {
@@ -1211,7 +1265,7 @@
     var text = input.value.trim();
     if(!text) return;
     var nowD = new Date();
-    state.tasks.unshift({ id:uid(), text:text, created:localDateStr(nowD), ct:pad(nowD.getHours())+':'+pad(nowD.getMinutes()), today:false, done:false, doneAt:null });
+    state.tasks.unshift({ id:uid(), text:text, created:localDateStr(nowD), ct:pad(nowD.getHours())+':'+pad(nowD.getMinutes()), today:false, done:false, doneAt:null, m:Date.now() });
     input.value = '';
     try{ localStorage.removeItem('draft'); }catch(e){}
     setView('tasks');
@@ -1259,9 +1313,11 @@
         setSync('err', '要暗號先開到——刷新再入');
         return;
       }
+      if(dirty && state){ row = {state: mergeRemote(state, row.state), updated_at: row.updated_at}; }
       applyState(row); cacheSave(row);
-      setSync('ok', '同步已接通');
+      setSync('ok', dirty ? '合併咗・儲緊…' : '同步已接通');
       render();
+      if(dirty) schedulePersist();
     });
   }
   // ---------- 下拉更新 ----------
@@ -1320,7 +1376,7 @@
   setTimeout(verCheck, 2500);      // 開頁自檢版本一次
   setInterval(verCheck, 300000);   // 之後每 5 分鐘一次（防 iOS 死抱舊 cache）
   document.addEventListener('visibilitychange', function(){
-    if(!document.hidden) refreshIfChanged();
+    if(!document.hidden){ refreshIfChanged(); verCheck(); }
   });
 })();
 </script>
