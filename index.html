@@ -223,8 +223,10 @@
         cursor:pointer; padding:2px 6px; border-radius:6px}
   .mval:active{background:var(--chip)}
   .mval.empty{color:var(--muted)}
-  .inc-group{font-size:12px; color:var(--accent); letter-spacing:.12em; font-weight:700;
-             padding:11px 14px 2px; border-top:1px solid var(--line)}
+  .inc-group{font-family:'Noto Serif TC',serif; font-size:19px; color:var(--ink);
+             font-weight:900; letter-spacing:.02em;
+             padding:15px 14px 6px; border-top:1px solid var(--line)}
+  .inc-no{color:var(--muted); font-size:14px; min-width:20px}
   .card > .inc-group:first-child{border-top:none}
   .inc-row{display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:15px}
   .inc-name{flex:1; min-width:0}
@@ -343,7 +345,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
-      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（租→廣告→儲公司→WBH儲→曉明→Franki・剩返嘅落租金）</button>
+      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（租→廣告→WBH儲→曉明→Franki・剩返嘅落租金）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -380,7 +382,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.8</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.9</span></div>
 </div>
 
 <div class="capture">
@@ -547,8 +549,9 @@
     var recv = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
 
     var rows = [
-      ['rent','① 租金'], ['ad','② 廣告'], ['misc','③ 儲公司'], ['save','④ WBH 儲'],
-      ['ming','⑤ 曉明人工'], ['franki','⑥ Franki 人工'], ['offering','奉獻（你自己入）']
+      ['rent','① 租金'], ['ad','② 廣告'], ['save','③ WBH 儲'],
+      ['ming','④ 曉明人工'], ['franki','⑤ Franki 人工'],
+      ['misc','⑥ 儲公司'], ['offering','奉獻（你自己入）']
     ];
     var used = rows.reduce(function(a,r){ return a + (Number(mo[r[0]])||0); }, 0);
     var left = (Number(mo.account)||0) - used;
@@ -580,11 +583,12 @@
     var sum = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
     $('incomeTotal').innerHTML = items.length ? nw('$'+fmtM(sum)) + '・' + items.length + ' 筆' : '';
     $('incomeList').innerHTML = order.length
-      ? order.map(function(c){
+      ? order.map(function(c, ci){
           var sub = groups[c].reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
-          return '<div class="inc-group">'+esc(c)+'</div>' +
-            groups[c].map(function(it){
-              return '<div class="inc-row"><span class="inc-name">'+esc(it.name)+'</span>'+
+          return '<div class="inc-group">'+nw(String(ci+1))+'. '+esc(c)+'</div>' +
+            groups[c].map(function(it, ii){
+              return '<div class="inc-row"><span class="inc-no">'+nw(String(ii+1))+'.</span>'+
+                     '<span class="inc-name">'+esc(it.name)+'</span>'+
                      '<span class="inc-d">'+nw(esc(it.d||''))+'</span>'+
                      '<span class="inc-amt">'+nw(fmtM(it.amt))+'</span>'+
                      '<button class="del" data-incdel="'+esc(it.id)+'">✕</button></div>';
@@ -601,8 +605,8 @@
     if(!pot){ if(!silent) alert('先入「戶口總數」'); return; }
     pot -= (Number(mo.offering)||0);            // 奉獻你自己入，先扣起
     if(pot < 0) pot = 0;
-    var order = [['rent',mn.rent], ['ad',mn.ad], ['misc',mn.misc],
-                 ['save',mn.save], ['ming',mn.ming], ['franki',mn.franki]];
+    var order = [['rent',mn.rent], ['ad',mn.ad], ['save',mn.save],
+                 ['ming',mn.ming], ['franki',mn.franki], ['misc',mn.misc]];
     order.forEach(function(o){
       var give = Math.min(pot, Number(o[1])||0);
       mo[o[0]] = give > 0 ? give : null;
