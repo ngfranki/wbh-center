@@ -343,7 +343,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
-      <button class="past-link" id="autoAllocBtn">⚡ 按次序自動分配（租→廣告→儲公司→WBH儲→曉明→Franki）</button>
+      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（租→廣告→儲公司→WBH儲→曉明→Franki・剩返嘅落租金）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -380,7 +380,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.7</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.8</span></div>
 </div>
 
 <div class="capture">
@@ -479,7 +479,8 @@
       var it = (mo2.items||[]).filter(function(x){ return x.id === id2; })[0];
       if(it && confirm('刪咗「'+it.name+' '+fmtM(it.amt)+'」？')){
         mo2.items = mo2.items.filter(function(x){ return x.id !== id2; });
-        renderMoney(); schedulePersist();
+        mo2.account = Math.max(0, (Number(mo2.account)||0) - (Number(it.amt)||0));
+        autoAllocate(true);
       }
     }
   });
@@ -566,7 +567,7 @@
     }).join('');
 
     var foot = '<div class="mrow" style="background:'+(left<0?'var(--danger-soft)':'var(--chip)')+'">'+
-               '<span class="k" style="font-weight:700">'+(left<0?'超咗':'未分配')+'</span>'+
+               '<span class="k" style="font-weight:700">'+(left<0?'超咗':(left>0?'未分配':'✓ 分晒'))+'</span>'+
                '<span class="mval" style="cursor:default;font-weight:700;color:'+(left<0?'var(--danger)':'var(--ink)')+'">'+
                nw('$'+fmtM(Math.abs(left)))+'</span></div>';
 
@@ -594,10 +595,10 @@
   }
 
 
-  function autoAllocate(){
+  function autoAllocate(silent){
     var inc = ensureIncome(), mo = getMonth(inc, moIdx), mn = inc.min;
     var pot = Number(mo.account)||0;
-    if(!pot){ alert('先入「戶口總數」'); return; }
+    if(!pot){ if(!silent) alert('先入「戶口總數」'); return; }
     pot -= (Number(mo.offering)||0);            // 奉獻你自己入，先扣起
     if(pot < 0) pot = 0;
     var order = [['rent',mn.rent], ['ad',mn.ad], ['misc',mn.misc],
@@ -607,6 +608,7 @@
       mo[o[0]] = give > 0 ? give : null;
       pot -= give;
     });
+    if(pot > 0) mo.rent = (Number(mo.rent)||0) + pot;   // 多出嚟全部落租金
     renderMoney(); schedulePersist();
   }
 
@@ -632,8 +634,9 @@
       if(!c || !nm || !a){ alert('班別／人名／銀碼要填齊'); return; }
       mo.items = mo.items || [];
       mo.items.push({id:uid(), course:c, name:nm, d:d, amt:a});
+      mo.account = (Number(mo.account)||0) + a;   // 收款入戶口
       f.style.display = 'none';
-      renderMoney(); schedulePersist();
+      autoAllocate(true);                         // 即刻分餅仔
     });
     $('ncCancel').addEventListener('click', function(){ f.style.display = 'none'; });
   }
