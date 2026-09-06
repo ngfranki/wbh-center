@@ -1,3 +1,31 @@
+  function renderNotes(){
+    // 今日情報
+    var it = (state.intel || []);
+    $('intelStamp').textContent = it.length ? (it[0].d ? nw(mmdd(it[0].d)) : '') + '・' + it.length + ' 條' : '';
+    $('intelList').innerHTML = it.length
+      ? it.slice(0,12).map(function(x){
+          var cls = (x.cat === 'AI' || x.cat === '工具') ? ' b' : '';
+          return '<div class="intel"><span class="intel-cat'+cls+'">'+esc(x.cat||'情報')+'</span>'+
+                 '<div class="intel-t">'+esc(x.t||'')+'</div>'+
+                 '<div class="intel-why"><b>對你嚟講：</b>'+esc(x.why||'')+'</div>'+
+                 '<div class="intel-src">'+esc(x.src||'') +
+                 (x.url ? ' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">睇原文 ↗</a>' : '') +
+                 '</div></div>';
+        }).join('')
+      : '<div class="card"><div class="empty">Eva 每朝搵香港芳療同行動態＋你用得着嘅 AI 消息</div></div>';
+
+    // 傾過嘅嘢
+    var ns = (state.notes || []).slice().reverse();
+    var byd = {}, order = [];
+    ns.forEach(function(n){ if(!byd[n.d]){ byd[n.d]=[]; order.push(n.d); } byd[n.d].push(n); });
+    $('notesList').innerHTML = order.length
+      ? order.slice(0,10).map(function(d){
+          return '<div class="day-group">'+nw(mmdd(d))+'</div>' +
+            byd[d].map(function(n){ return '<div class="note-row">'+esc(n.text)+'</div>'; }).join('');
+        }).join('')
+      : '<div class="empty">未有紀錄</div>';
+  }
+
 <!doctype html>
 <html lang="zh-HK">
 <head>
@@ -222,6 +250,17 @@
   .ads-ok{background:var(--accent-soft); color:var(--accent); font-weight:700}
   .ads-warn2{background:var(--wbh-soft); color:var(--wbh); font-weight:700}
   .ads-bad{background:var(--danger-soft); color:var(--danger); font-weight:700}
+  .intel{background:var(--card); border:1px solid var(--line); border-radius:14px;
+         box-shadow:var(--shadow); padding:14px 16px; margin-bottom:10px}
+  .intel-cat{font-size:11px; letter-spacing:.14em; font-weight:700; color:var(--accent);
+             background:var(--accent-soft); display:inline-block; padding:3px 9px; border-radius:999px}
+  .intel-cat.b{color:var(--wbh); background:var(--wbh-soft)}
+  .intel-t{font-family:'Noto Serif TC',serif; font-weight:700; font-size:16px;
+           line-height:1.5; margin:8px 0 5px}
+  .intel-why{font-size:13px; color:var(--ink); line-height:1.65}
+  .intel-why b{color:var(--accent)}
+  .intel-src{font-size:11.5px; color:var(--muted); margin-top:7px}
+  .intel-src a{color:var(--muted)}
   .ck{margin-top:10px; border-top:1px dashed var(--line); padding-top:8px}
   .ck-row{display:flex; align-items:baseline; gap:7px; padding:5px 0; font-size:13px; line-height:1.5}
   .ck-no{flex:none; color:var(--muted); font-size:12px; width:15px}
@@ -328,9 +367,9 @@
   <div class="tabs">
     <button class="tab" data-view="sched" id="tabSched">時間表</button>
     <button class="tab" data-view="tasks" id="tabTasks">任務</button>
-    <button class="tab" data-view="notes" id="tabNotes">紀錄</button>
+    <button class="tab" data-view="notes" id="tabNotes">情報</button>
     <button class="tab" data-view="social" id="tabSocial">社群</button>
-    <button class="tab" data-view="money" id="tabMoney">入數</button>
+    <button class="tab" data-view="money" id="tabMoney">資金</button>
     <button class="tab" data-view="ads" id="tabAds">廣告</button>
   </div>
 
@@ -361,27 +400,12 @@
 
   <div class="view" id="viewNotes">
     <section>
-      <h2>每週回顧</h2>
-      <div class="card" id="weeklyList"></div>
+      <h2>今日情報 <span class="count" id="intelStamp"></span></h2>
+      <div id="intelList"></div>
     </section>
     <section>
-      <h2>傾過嘅嘢 <span class="count">Eva 每個 session 幫你記</span></h2>
+      <h2>傾過嘅嘢 <span class="count">Eva 做完一件實質嘢即刻記</span></h2>
       <div class="card" id="notesList"></div>
-    </section>
-  </div>
-
-  <div class="view" id="viewAds">
-    <section>
-      <h2>廣告成效 <span class="count" id="adsStamp"></span></h2>
-      <div class="card min-card" style="padding:16px 20px">
-        <div class="min-label" id="adsPeriod">近 7 日花費</div>
-        <div class="min-total" id="adsSpend">—</div>
-        <div class="ads-sum" id="adsSummary"></div>
-      </div>
-      <div id="adsList" style="margin-top:14px"></div>
-      <div class="ads-warn">⚠️ 診斷跟刀姐框架（夠唔夠數據 → 受眾燒燶未 → 素材／角度 → 可唔可以加錢）。Meta 自報數會虛高，真係賺定蝕要對返 Kajabi 實際入數。</div>
-      <a class="past-link" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1005692020589748"
-         target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開 Meta 廣告管理員 ↗</a>
     </section>
   </div>
 
@@ -437,7 +461,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.6</span></div>
 </div>
 
 <div class="capture">
@@ -959,22 +983,6 @@
     $('schedList').innerHTML = h;
     $('schedStamp').textContent = state.meta.eventsUpdated
       ? 'Eva '+mmdd(state.meta.eventsUpdated)+' 更新' : '';
-  }
-
-  function renderNotes(){
-    var wk = state.weekly.slice(0,4).map(function(w){
-      return '<div class="weekly-item"><div class="weekly-wk">'+esc(w.wk)+'</div>'+esc(w.text)+'</div>';
-    }).join('');
-    $('weeklyList').innerHTML = wk || '<div class="empty">逢星期日晚 Eva 幫你埋單：今個星期完成咗啲乜</div>';
-
-    var byDay = {};
-    state.notes.forEach(function(n){ (byDay[n.d] = byDay[n.d] || []).push(n.text); });
-    var days = Object.keys(byDay).sort().reverse().slice(0,14);
-    var h = days.map(function(d){
-      return '<div class="note-day"><div class="note-date">'+mmdd(d)+'</div>'+
-        byDay[d].map(function(x){ return '<div class="note-item">'+esc(x)+'</div>'; }).join('')+'</div>';
-    }).join('');
-    $('notesList').innerHTML = h || '<div class="empty">未有紀錄</div>';
   }
 
   // ---------- persist（Supabase）----------
