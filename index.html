@@ -457,7 +457,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.4</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.5</span></div>
 </div>
 
 <div class="capture">
@@ -1041,10 +1041,12 @@
   function persist(){
     if(!state) return;
     fetchBoard(function(row, reached){
-      if(row && row.state) state = mergeRemote(state, row.state);
+      if(row && row.state){ state = mergeRemote(state, row.state); baseTs = row.updated_at || null; }
+      else baseTs = null;
       doPersist();
     });
   }
+  var baseTs = null, persistRetry = 0;
 
   // 🔴 v6.4 合併規則：寫入前攞後台最新版做底，只疊自己改過嘅嘢上去——
   //   後台擁有：ads／intel／events／meta（永遠用後台）
@@ -1111,13 +1113,22 @@
 
   function doPersist(){
     if(!state) return;
-    fetch(SB+'/rest/v1/wbh_board?on_conflict=id', {
-      method:'POST',
-      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY, 'Content-Type':'application/json',
-               Prefer:'resolution=merge-duplicates,return=representation'},
-      body: JSON.stringify([{id:'main', state:state, updated_at:new Date().toISOString()}])
-    }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    var hdr = {apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY, 'Content-Type':'application/json',
+               Prefer:'resolution=merge-duplicates,return=representation'};
+    var nowIso = new Date().toISOString();
+    var req = baseTs
+      ? fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(baseTs),
+              {method:'PATCH', headers:hdr, body: JSON.stringify({state:state, updated_at:nowIso})})
+      : fetch(SB+'/rest/v1/wbh_board?on_conflict=id',
+              {method:'POST', headers:hdr, body: JSON.stringify([{id:'main', state:state, updated_at:nowIso}])});
+    req.then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(rows){
+        if(baseTs && (!rows || !rows.length)){
+          // 🔴 樂觀鎖撞咗：有人（Eva／曉明）啱啱寫咗——重新攞最新版合併再寫，最多 5 次
+          if(++persistRetry <= 5){ setSync('', '有人同時改緊・合併緊…'); persist(); return; }
+          persistRetry = 0; baseTs = null; doPersist(); return;   // 5 次都撞＝退返 upsert 保底
+        }
+        persistRetry = 0;
         dirty = false;
         if(rows && rows[0]) lastUpdated = rows[0].updated_at;
         cacheSave({state:state, updated_at:lastUpdated});
