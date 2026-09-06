@@ -345,7 +345,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
-      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（租→廣告→WBH儲→曉明→Franki・剩返嘅落租金）</button>
+      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（租→廣告→儲公司→曉明→Franki・剩返嘅落租金）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -382,7 +382,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.9</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.0</span></div>
 </div>
 
 <div class="capture">
@@ -533,10 +533,10 @@
     if(!state || !moneyOpen) return;
     var inc = ensureIncome();
     var mn = inc.min;
-    var total = (mn.franki||0)+(mn.ming||0)+(mn.rent||0)+(mn.misc||0)+(mn.ad||0)+(mn.save||0);
+    var total = (mn.rent||0)+(mn.ad||0)+(mn.save||0)+(mn.ming||0)+(mn.franki||0);
     $('minTotal').innerHTML = '$' + nw(fmtM(total));
-    $('minBreak').innerHTML = ['Franki '+fmtM(mn.franki), '曉明 '+fmtM(mn.ming), '租 '+fmtM(mn.rent),
-                              '儲公司 '+fmtM(mn.misc), '廣告 '+fmtM(mn.ad), '儲 '+fmtM(mn.save)]
+    $('minBreak').innerHTML = ['租 '+fmtM(mn.rent), '廣告 '+fmtM(mn.ad), '儲公司 '+fmtM(mn.save),
+                              '曉明 '+fmtM(mn.ming), 'Franki '+fmtM(mn.franki)]
                               .map(function(s){ return nw(s); }).join(' · ');
 
     var mo = getMonth(inc, moIdx);
@@ -549,9 +549,9 @@
     var recv = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
 
     var rows = [
-      ['rent','① 租金'], ['ad','② 廣告'], ['save','③ WBH 儲'],
+      ['rent','① 租金'], ['ad','② 廣告'], ['save','③ 儲公司'],
       ['ming','④ 曉明人工'], ['franki','⑤ Franki 人工'],
-      ['misc','⑥ 儲公司'], ['offering','奉獻（你自己入）']
+      ['offering','奉獻（你自己入）']
     ];
     var used = rows.reduce(function(a,r){ return a + (Number(mo[r[0]])||0); }, 0);
     var left = (Number(mo.account)||0) - used;
@@ -606,7 +606,7 @@
     pot -= (Number(mo.offering)||0);            // 奉獻你自己入，先扣起
     if(pot < 0) pot = 0;
     var order = [['rent',mn.rent], ['ad',mn.ad], ['save',mn.save],
-                 ['ming',mn.ming], ['franki',mn.franki], ['misc',mn.misc]];
+                 ['ming',mn.ming], ['franki',mn.franki]];
     order.forEach(function(o){
       var give = Math.min(pot, Number(o[1])||0);
       mo[o[0]] = give > 0 ? give : null;
