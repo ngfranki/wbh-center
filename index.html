@@ -204,6 +204,18 @@
   .weekly-item:first-child{border-top:none}
   .weekly-wk{font-weight:700; color:var(--accent); font-size:13px; margin-bottom:3px}
   .foot{margin-top:30px; font-size:12px; color:var(--muted); text-align:center; line-height:1.8}
+  .ads-card{background:var(--card); border:1px solid var(--line); border-radius:14px;
+            box-shadow:var(--shadow); padding:14px 16px; margin-bottom:10px}
+  .ads-name{font-size:14px; font-weight:700; line-height:1.4; word-break:break-all; margin-bottom:8px}
+  .ads-money{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-variant-numeric:tabular-nums;
+             font-size:15px; margin-bottom:8px}
+  .ads-money b{font-size:17px}
+  .ads-chips{display:flex; gap:8px; flex-wrap:wrap}
+  .ads-chip{font-size:12px; padding:4px 10px; border-radius:999px; font-variant-numeric:tabular-nums}
+  .ads-ok{background:var(--accent-soft); color:var(--accent); font-weight:700}
+  .ads-warn2{background:var(--wbh-soft); color:var(--wbh); font-weight:700}
+  .ads-bad{background:var(--danger-soft); color:var(--danger); font-weight:700}
+  .ads-warn{font-size:12px; color:var(--muted); line-height:1.7; margin:14px 2px 10px}
   .min-card{padding:18px 20px; text-align:center}
   .min-label{font-size:12px; color:var(--muted); letter-spacing:.2em}
   .min-total{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-weight:700;
@@ -292,6 +304,7 @@
     <button class="tab" data-view="notes" id="tabNotes">紀錄</button>
     <button class="tab" data-view="social" id="tabSocial">社群</button>
     <button class="tab" data-view="money" id="tabMoney">入數</button>
+    <button class="tab" data-view="ads" id="tabAds">廣告</button>
   </div>
 
   <div class="view" id="viewSched">
@@ -327,6 +340,20 @@
     <section>
       <h2>傾過嘅嘢 <span class="count">Eva 每個 session 幫你記</span></h2>
       <div class="card" id="notesList"></div>
+    </section>
+  </div>
+
+  <div class="view" id="viewAds">
+    <section>
+      <h2>廣告成效 <span class="count" id="adsStamp"></span></h2>
+      <div class="card min-card" style="padding:16px 20px">
+        <div class="min-label" id="adsPeriod">近 7 日花費</div>
+        <div class="min-total" id="adsSpend">—</div>
+      </div>
+      <div id="adsList" style="margin-top:14px"></div>
+      <div class="ads-warn">⚠️ 呢啲係 Meta 自報數字，會虛高。真係賺定蝕要對返 Kajabi／銀行實際入數。</div>
+      <a class="past-link" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1005692020589748"
+         target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開 Meta 廣告管理員 ↗</a>
     </section>
   </div>
 
@@ -382,7 +409,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.2</span></div>
 </div>
 
 <div class="capture">
@@ -443,7 +470,7 @@
   // ---------- 版面切換 ----------
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
-               done:['viewDone', null], money:['viewMoney','tabMoney']};
+               done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -457,6 +484,7 @@
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
+  $('tabAds').addEventListener('click', function(){ setView('ads'); renderAds(); });
   $('pastLink').addEventListener('click', function(){ setView('done'); window.scrollTo(0,0); });
   $('addIncomeBtn').addEventListener('click', showAddIncome);
   $('autoAllocBtn').addEventListener('click', autoAllocate);
@@ -500,6 +528,40 @@
     }
   });
 
+
+  // ---------- 廣告成效 ----------
+  function renderAds(){
+    if(!state) return;
+    var a = state.ads;
+    if(!a || !a.campaigns || !a.campaigns.length){
+      $('adsSpend').textContent = '—';
+      $('adsStamp').textContent = '';
+      $('adsList').innerHTML = '<div class="card"><div class="empty">仲未有數據——同 Eva 講「更新廣告數」</div></div>';
+      return;
+    }
+    $('adsStamp').innerHTML = nw('Eva '+esc(a.updated||'')+' 更新');
+    $('adsPeriod').textContent = (a.period||'近 7 日') + '花費';
+    $('adsSpend').innerHTML = nw('$'+fmtM(Math.round(a.spend||0)));
+    $('adsList').innerHTML = a.campaigns.map(function(c){
+      var chips = [];
+      if(c.ctr != null){
+        var cls = c.ctr >= 2.5 ? 'ads-ok' : (c.ctr >= 1 ? 'ads-warn2' : 'ads-bad');
+        chips.push('<span class="ads-chip '+cls+'">CTR '+nw(c.ctr.toFixed(2))+'%</span>');
+      }
+      if(c.freq != null){
+        var fc = c.freq < 2 ? 'ads-ok' : (c.freq <= 5 ? 'ads-warn2' : 'ads-bad');
+        var ft = c.freq < 2 ? '' : (c.freq <= 5 ? '·唔好加錢' : '·換 concept');
+        chips.push('<span class="ads-chip '+fc+'">頻次 '+nw(c.freq.toFixed(2))+ft+'</span>');
+      }
+      var res = (c.res != null)
+        ? nw(String(c.res))+' '+esc(c.resType||'')+(c.cpr!=null ? ' @ '+nw('$'+fmtM(Math.round(c.cpr))) : '')
+        : '未有結果';
+      return '<div class="ads-card"><div class="ads-name">'+esc(c.n)+'</div>'+
+             '<div class="ads-money"><b>'+nw('$'+fmtM(Math.round(c.spend||0)))+'</b>'+
+             ' <span style="color:var(--muted)">·</span> '+res+'</div>'+
+             '<div class="ads-chips">'+chips.join('')+'</div></div>';
+    }).join('');
+  }
 
   // ---------- 入數簿 ----------
   var moneyOpen = true, moIdx = 0;
@@ -728,6 +790,7 @@
 
     renderSched(today);
     if(moneyOpen) renderMoney();
+    renderAds();
     renderNotes();
 
     // 掛返 editor 嘅初始值
@@ -1049,7 +1112,7 @@
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
   moneyOpen = true;
   if(startView === 'done') startView = 'tasks';
-  setView(['sched','tasks','notes','social','money'].indexOf(startView) >= 0 ? startView : 'sched');
+  setView(['sched','tasks','notes','social','money','ads'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
