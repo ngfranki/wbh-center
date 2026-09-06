@@ -222,6 +222,16 @@
   .ads-ok{background:var(--accent-soft); color:var(--accent); font-weight:700}
   .ads-warn2{background:var(--wbh-soft); color:var(--wbh); font-weight:700}
   .ads-bad{background:var(--danger-soft); color:var(--danger); font-weight:700}
+  .diag{margin-top:10px; padding:10px 12px; border-radius:10px; font-size:13px; line-height:1.65}
+  .diag.ok{background:var(--accent-soft); border-left:3px solid var(--accent)}
+  .diag.warn{background:var(--wbh-soft); border-left:3px solid var(--wbh)}
+  .diag.bad{background:var(--danger-soft); border-left:3px solid var(--danger)}
+  .diag.wait{background:var(--chip); border-left:3px solid var(--muted)}
+  .diag-v{font-weight:700; margin-bottom:3px}
+  .diag-why{color:var(--muted); font-size:12px}
+  .diag-next{margin-top:6px; font-size:12px}
+  .diag-next b{font-weight:700}
+  .ads-sum{font-size:13px; color:var(--muted); margin-top:6px}
   .ads-warn{font-size:12px; color:var(--muted); line-height:1.7; margin:14px 2px 10px}
   .min-card{padding:18px 20px; text-align:center}
   .min-label{font-size:12px; color:var(--muted); letter-spacing:.2em}
@@ -357,9 +367,10 @@
       <div class="card min-card" style="padding:16px 20px">
         <div class="min-label" id="adsPeriod">近 7 日花費</div>
         <div class="min-total" id="adsSpend">—</div>
+        <div class="ads-sum" id="adsSummary"></div>
       </div>
       <div id="adsList" style="margin-top:14px"></div>
-      <div class="ads-warn">⚠️ 呢啲係 Meta 自報數字，會虛高。真係賺定蝕要對返 Kajabi／銀行實際入數。</div>
+      <div class="ads-warn">⚠️ 診斷跟刀姐框架（夠唔夠數據 → 受眾燒燶未 → 素材／角度 → 可唔可以加錢）。Meta 自報數會虛高，真係賺定蝕要對返 Kajabi 實際入數。</div>
       <a class="past-link" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1005692020589748"
          target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">開 Meta 廣告管理員 ↗</a>
     </section>
@@ -417,7 +428,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.4</span></div>
 </div>
 
 <div class="capture">
@@ -546,7 +557,8 @@
     if(!a || !a.campaigns || !a.campaigns.length){
       $('adsSpend').textContent = '—';
       $('adsStamp').textContent = '';
-      $('adsList').innerHTML = '<div class="card"><div class="empty">仲未有數據——同 Eva 講「更新廣告數」</div></div>';
+      $('adsSummary').textContent = '';
+      $('adsList').innerHTML = '<div class="card"><div class="empty">向下拉即刻攞最新數</div></div>';
       return;
     }
     var waiting = a.req && (!a.updatedAt || a.req > a.updatedAt);
@@ -554,6 +566,7 @@
       (waiting ? ' <span style="color:var(--wbh)">・等緊 Eva 抓新數</span>' : '');
     $('adsPeriod').textContent = (a.period||'近 7 日') + '花費';
     $('adsSpend').innerHTML = nw('$'+fmtM(Math.round(a.spend||0)));
+    $('adsSummary').textContent = a.summary || '';
     $('adsList').innerHTML = a.campaigns.map(function(c){
       var chips = [];
       if(c.ctr != null){
@@ -568,10 +581,15 @@
       var res = (c.res != null)
         ? nw(String(c.res))+' '+esc(c.resType||'')+(c.cpr!=null ? ' @ '+nw('$'+fmtM(Math.round(c.cpr))) : '')
         : '未有結果';
+      var dg = c.diag ? '<div class="diag '+esc(c.diag.lv||'wait')+'">'+
+                 '<div class="diag-v">'+esc(c.diag.v||'')+'</div>'+
+                 '<div class="diag-why">'+nw(esc(c.diag.why||''))+'</div>'+
+                 (c.diag.next ? '<div class="diag-next"><b>下一步：</b>'+esc(c.diag.next)+'</div>' : '')+
+               '</div>' : '';
       return '<div class="ads-card"><div class="ads-name">'+esc(c.n)+'</div>'+
              '<div class="ads-money"><b>'+nw('$'+fmtM(Math.round(c.spend||0)))+'</b>'+
              ' <span style="color:var(--muted)">·</span> '+res+'</div>'+
-             '<div class="ads-chips">'+chips.join('')+'</div></div>';
+             '<div class="ads-chips">'+chips.join('')+'</div>'+dg+'</div>';
     }).join('');
   }
 
