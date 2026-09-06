@@ -204,6 +204,34 @@
   .weekly-item:first-child{border-top:none}
   .weekly-wk{font-weight:700; color:var(--accent); font-size:13px; margin-bottom:3px}
   .foot{margin-top:30px; font-size:12px; color:var(--muted); text-align:center; line-height:1.8}
+  .min-card{padding:18px 20px; text-align:center}
+  .min-label{font-size:12px; color:var(--muted); letter-spacing:.2em}
+  .min-total{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-weight:700;
+             font-size:32px; margin:4px 0 8px; font-variant-numeric:tabular-nums}
+  .min-break{font-size:12px; color:var(--muted); line-height:1.9}
+  .mo-nav{display:flex; align-items:center; justify-content:center; gap:14px; margin:18px 0 10px}
+  .mo-btn{border:1px solid var(--line); background:var(--card); color:var(--ink);
+          font-size:17px; width:34px; height:34px; border-radius:9px; cursor:pointer; line-height:1}
+  .mo-label{font-family:'Noto Serif TC',serif; font-weight:700; font-size:17px}
+  .mrow{display:flex; align-items:center; justify-content:space-between;
+        padding:11px 14px; border-top:1px solid var(--line); font-size:15px}
+  .mrow:first-child{border-top:none}
+  .mrow.head{background:var(--accent-soft); font-weight:700}
+  .mrow .k{color:var(--muted); font-size:14px}
+  .mrow.head .k{color:var(--accent); font-size:15px}
+  .mval{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-variant-numeric:tabular-nums;
+        cursor:pointer; padding:2px 6px; border-radius:6px}
+  .mval:active{background:var(--chip)}
+  .mval.empty{color:var(--muted)}
+  .inc-group{font-size:12px; color:var(--accent); letter-spacing:.12em; font-weight:700;
+             padding:11px 14px 2px; border-top:1px solid var(--line)}
+  .card > .inc-group:first-child{border-top:none}
+  .inc-row{display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:15px}
+  .inc-name{flex:1; min-width:0}
+  .inc-d{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .inc-amt{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-variant-numeric:tabular-nums;
+           font-weight:700; min-width:64px; text-align:right}
+  .inc-sub{display:flex; justify-content:flex-end; padding:2px 14px 8px; font-size:12px; color:var(--muted)}
   .past-link{
     display:block; width:100%; margin-top:10px; border:1px solid var(--line);
     background:var(--card); color:var(--muted); font-family:inherit; font-size:13px;
@@ -261,6 +289,7 @@
     <button class="tab" data-view="tasks" id="tabTasks">任務</button>
     <button class="tab" data-view="notes" id="tabNotes">紀錄</button>
     <button class="tab" data-view="social" id="tabSocial">社群</button>
+    <button class="tab" data-view="money" id="tabMoney">入數</button>
   </div>
 
   <div class="view" id="viewSched">
@@ -299,6 +328,36 @@
     </section>
   </div>
 
+  <div class="view" id="viewMoney">
+    <section id="moneyLocked">
+      <div class="card social-card">
+        <div class="social-title">🔒 入數簿</div>
+        <div class="social-sub">私人數簿・要密碼</div>
+        <button class="social-open" id="moneyUnlock" style="border:none;cursor:pointer">解鎖</button>
+      </div>
+    </section>
+    <section id="moneyBody" style="display:none">
+      <div class="card min-card">
+        <div class="min-label">每月最低要收</div>
+        <div class="min-total" id="minTotal"></div>
+        <div class="min-break" id="minBreak"></div>
+      </div>
+
+      <div class="mo-nav">
+        <button class="mo-btn" id="moPrev">‹</button>
+        <span class="mo-label" id="moLabel"></span>
+        <button class="mo-btn" id="moNext">›</button>
+      </div>
+
+      <div class="card" id="moneyCard"></div>
+
+      <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
+      <div class="card" id="incomeList"></div>
+      <button class="past-link" id="addIncomeBtn">＋ 入一筆數</button>
+      <div class="card" id="addIncomeForm" style="display:none; margin-top:10px"></div>
+    </section>
+  </div>
+
   <div class="view" id="viewDone">
     <section>
       <button class="back-link" id="backToTasks">← 返「任務」</button>
@@ -327,7 +386,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.6</span></div>
 </div>
 
 <div class="capture">
@@ -388,7 +447,7 @@
   // ---------- 版面切換 ----------
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
-               done:['viewDone', null]};
+               done:['viewDone', null], money:['viewMoney','tabMoney']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -401,7 +460,35 @@
   $('tabTasks').addEventListener('click', function(){ setView('tasks'); });
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
+  $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
   $('pastLink').addEventListener('click', function(){ setView('done'); window.scrollTo(0,0); });
+  $('moneyUnlock').addEventListener('click', unlockMoney);
+  $('addIncomeBtn').addEventListener('click', showAddIncome);
+  $('moPrev').addEventListener('click', function(){ moIdx++; renderMoney(); });
+  $('moNext').addEventListener('click', function(){ moIdx--; renderMoney(); });
+  document.addEventListener('click', function(ev){
+    var mv = ev.target.closest('[data-mfield]');
+    if(mv && moneyOpen){
+      var inc = ensureIncome(), mo = getMonth(inc, moIdx), fld = mv.getAttribute('data-mfield');
+      var cur = mo[fld] == null ? '' : mo[fld];
+      var v = prompt(mv.previousElementSibling.textContent + ' 數字（唔要就留空）', cur);
+      if(v === null) return;
+      v = String(v).replace(/[^0-9.-]/g,'');
+      mo[fld] = v === '' ? null : Number(v);
+      renderMoney(); schedulePersist();
+      return;
+    }
+    var dl = ev.target.closest('[data-incdel]');
+    if(dl && moneyOpen){
+      var id2 = dl.getAttribute('data-incdel');
+      var inc2 = ensureIncome(), mo2 = getMonth(inc2, moIdx);
+      var it = (mo2.items||[]).filter(function(x){ return x.id === id2; })[0];
+      if(it && confirm('刪咗「'+it.name+' '+fmtM(it.amt)+'」？')){
+        mo2.items = mo2.items.filter(function(x){ return x.id !== id2; });
+        renderMoney(); schedulePersist();
+      }
+    }
+  });
   $('backToTasks').addEventListener('click', function(){ setView('tasks'); window.scrollTo(0,0); });
   $('socialTry').addEventListener('click', function(){
     var w = $('socialFrameWrap');
@@ -415,6 +502,138 @@
       this.textContent = '已經登入咗？試下喺呢度載入 ⤵';
     }
   });
+
+
+  // ---------- 入數簿 ----------
+  var moneyOpen = false, moIdx = 0;
+  function fmtM(n){
+    if(n === null || n === undefined || n === '') return null;
+    return Number(n).toLocaleString('en-US');
+  }
+  function ensureIncome(){
+    if(!state.income) state.income = {};
+    var inc = state.income;
+    if(!inc.min) inc.min = {franki:15000, ming:25000, rent:11900, misc:2000, ad:8000, save:6000};
+    if(!Array.isArray(inc.months)) inc.months = [];
+    return inc;
+  }
+  function curMonthKey(){
+    var n = new Date();
+    return n.getFullYear()+'-'+pad(n.getMonth()+1);
+  }
+  function getMonth(inc, i){
+    if(!inc.months.length){
+      inc.months.push({m:curMonthKey(), account:null, franki:null, ming:null,
+                       rent:inc.min.rent, save:inc.min.save, ad:null, offering:null, tag:'', items:[]});
+    }
+    inc.months.sort(function(a,b){ return a.m < b.m ? 1 : -1; });
+    if(i < 0) i = 0;
+    if(i > inc.months.length - 1) i = inc.months.length - 1;
+    moIdx = i;
+    return inc.months[i];
+  }
+  function renderMoney(){
+    if(!state || !moneyOpen) return;
+    var inc = ensureIncome();
+    var mn = inc.min;
+    var total = (mn.franki||0)+(mn.ming||0)+(mn.rent||0)+(mn.misc||0)+(mn.ad||0)+(mn.save||0);
+    $('minTotal').innerHTML = '$' + nw(fmtM(total));
+    $('minBreak').innerHTML = ['Franki '+fmtM(mn.franki), '曉明 '+fmtM(mn.ming), '租 '+fmtM(mn.rent),
+                              '雜 '+fmtM(mn.misc), '廣告 '+fmtM(mn.ad), '儲 '+fmtM(mn.save)]
+                              .map(function(s){ return nw(s); }).join(' · ');
+
+    var mo = getMonth(inc, moIdx);
+    var ym = mo.m.split('-');
+    $('moLabel').innerHTML = nw(ym[0])+'年'+nw(String(Number(ym[1])))+'月' + (mo.tag ? ' <span class="stamp">'+esc(mo.tag)+'</span>' : '');
+    $('moPrev').disabled = (moIdx >= inc.months.length - 1);
+    $('moNext').disabled = (moIdx <= 0);
+
+    var rows = [
+      ['account','戶口總數', true],
+      ['franki','Franki 人工', false],
+      ['ming','曉明人工', false],
+      ['rent','租金', false],
+      ['save','WBH 儲', false],
+      ['ad','廣告', false],
+      ['offering','奉獻', false]
+    ];
+    $('moneyCard').innerHTML = rows.map(function(r){
+      var v = mo[r[0]];
+      var disp = (v === null || v === undefined || v === '') ? '—' : '$'+fmtM(v);
+      return '<div class="mrow'+(r[2]?' head':'')+'"><span class="k">'+r[1]+'</span>'+
+             '<span class="mval'+(v==null?' empty':'')+'" data-mfield="'+r[0]+'">'+nw(disp)+'</span></div>';
+    }).join('');
+
+    var items = mo.items || [];
+    var groups = {}, order = [];
+    items.forEach(function(it){
+      if(!groups[it.course]){ groups[it.course] = []; order.push(it.course); }
+      groups[it.course].push(it);
+    });
+    var sum = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
+    $('incomeTotal').innerHTML = items.length ? nw('$'+fmtM(sum)) + '・' + items.length + ' 筆' : '';
+    $('incomeList').innerHTML = order.length
+      ? order.map(function(c){
+          var sub = groups[c].reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
+          return '<div class="inc-group">'+esc(c)+'</div>' +
+            groups[c].map(function(it){
+              return '<div class="inc-row"><span class="inc-name">'+esc(it.name)+'</span>'+
+                     '<span class="inc-d">'+nw(esc(it.d||''))+'</span>'+
+                     '<span class="inc-amt">'+nw(fmtM(it.amt))+'</span>'+
+                     '<button class="del" data-incdel="'+esc(it.id)+'">✕</button></div>';
+            }).join('') +
+            '<div class="inc-sub">'+esc(c)+' 小計 '+nw('$'+fmtM(sub))+'</div>';
+        }).join('')
+      : '<div class="empty">今個月未入過數</div>';
+  }
+
+  function unlockMoney(){
+    var inc = state ? ensureIncome() : null;
+    if(!inc) return;
+    if(!inc.pin){
+      var p1 = prompt('第一次用——設定入數簿密碼（曉明冇呢個密碼開唔到）');
+      if(!p1) return;
+      inc.pin = String(p1).trim();
+      schedulePersist();
+    } else {
+      var p2 = prompt('入數簿密碼');
+      if(p2 === null) return;
+      if(String(p2).trim() !== inc.pin){ alert('密碼唔啱'); return; }
+    }
+    moneyOpen = true;
+    try{ sessionStorage.setItem('moneyOpen','1'); }catch(e){}
+    $('moneyLocked').style.display = 'none';
+    $('moneyBody').style.display = 'block';
+    renderMoney();
+  }
+
+  function showAddIncome(){
+    var f = $('addIncomeForm');
+    if(f.style.display !== 'none'){ f.style.display = 'none'; return; }
+    var inc = ensureIncome(), mo = getMonth(inc, moIdx);
+    var courses = {};
+    inc.months.forEach(function(m){ (m.items||[]).forEach(function(i){ courses[i.course]=1; }); });
+    var opts = Object.keys(courses).map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
+    var n = new Date();
+    f.style.display = 'block';
+    f.innerHTML = '<div class="editor">'+
+      '<div class="ed-field"><label>班別</label><input id="ncCourse" list="courseList" placeholder="LV1／好眠／疊香"><datalist id="courseList">'+opts+'</datalist></div>'+
+      '<div class="ed-field"><label>人名</label><input id="ncName" placeholder="學生名"></div>'+
+      '<div class="ed-field"><label>日期</label><input id="ncDate" value="'+n.getDate()+'/'+(n.getMonth()+1)+'"></div>'+
+      '<div class="ed-field"><label>銀碼</label><input id="ncAmt" type="number" inputmode="decimal" placeholder="0"></div>'+
+      '<div class="ed-actions"><button class="save" id="ncSave">入數</button>'+
+      '<button class="cancel" id="ncCancel">收埋</button></div></div>';
+    $('ncSave').addEventListener('click', function(){
+      var c = ($('ncCourse').value||'').trim(), nm = ($('ncName').value||'').trim();
+      var d = ($('ncDate').value||'').trim(), a = Number($('ncAmt').value);
+      if(!c || !nm || !a){ alert('班別／人名／銀碼要填齊'); return; }
+      mo.items = mo.items || [];
+      mo.items.push({id:uid(), course:c, name:nm, d:d, amt:a});
+      f.style.display = 'none';
+      renderMoney(); schedulePersist();
+    });
+    $('ncCancel').addEventListener('click', function(){ f.style.display = 'none'; });
+  }
 
   // ---------- render ----------
   function fmtHeader(){
@@ -498,6 +717,7 @@
     $('pastCount').textContent = donePast.length ? donePast.length+' 項' : '';
 
     renderSched(today);
+    if(moneyOpen) renderMoney();
     renderNotes();
 
     // 掛返 editor 嘅初始值
@@ -817,8 +1037,10 @@
   setInterval(function(){ try{ $('dateLine').innerHTML = fmtHeader(); }catch(e){} }, 20000);
   var startView = 'sched';
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
+  try{ if(sessionStorage.getItem('moneyOpen') === '1'){ moneyOpen = true;
+    $('moneyLocked').style.display='none'; $('moneyBody').style.display='block'; } }catch(e){}
   if(startView === 'done') startView = 'tasks';
-  setView(['sched','tasks','notes','social'].indexOf(startView) >= 0 ? startView : 'sched');
+  setView(['sched','tasks','notes','social','money'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
