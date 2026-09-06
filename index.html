@@ -457,7 +457,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.2</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.3</span></div>
 </div>
 
 <div class="capture">
@@ -590,7 +590,7 @@
       $('adsList').innerHTML = '<div class="card"><div class="empty">向下拉即刻攞最新數</div></div>';
       return;
     }
-    var waiting = a.req && (!a.updatedAt || a.req > a.updatedAt);
+    var waiting = a.req && tsOf(a.req) > tsOf(a.updatedAt);
     $('adsStamp').innerHTML = nw('Eva '+esc(a.updated||'')+' 更新') +
       (waiting ? ' <span style="color:var(--wbh)">・等緊 Eva 抓新數（約 30 秒，好咗會自動跳）</span>' : '');
     $('adsPeriod').textContent = (a.period||'近 7 日') + '花費';
@@ -1029,11 +1029,32 @@
     if(!state) return;
     fetchBoard(function(row, reached){
       if(row && row.state){
-        if(row.state.ads)   state.ads   = row.state.ads;
+        // 🔴 保住手上未處理嘅下拉請求，唔好俾後台版本冚走（v6.3）
+        var myReq = state.ads && state.ads.req;
+        if(row.state.ads){
+          state.ads = row.state.ads;
+          if(myReq && tsOf(myReq) > tsOf(state.ads.updatedAt)) state.ads.req = myReq;
+        }
         if(row.state.intel) state.intel = row.state.intel;
       }
       doPersist();
     });
+  }
+
+  function tsOf(x){ var t = x ? Date.parse(x) : 0; return isNaN(t) ? 0 : t; }
+  function verCheck(){
+    try{
+      fetch(location.pathname + '?_v=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.text(); })
+        .then(function(t){
+          var m = t.match(/id="verTag">(v[0-9.]+)</);
+          var cur = $('verTag');
+          if(m && cur && m[1] !== cur.textContent){
+            setSync('', '有新版・更新緊…');
+            setTimeout(function(){ location.reload(); }, 600);
+          }
+        }).catch(function(){});
+    }catch(e){}
   }
 
   function doPersist(){
@@ -1271,32 +1292,17 @@
   })();
 
   function doRefresh(){
+    verCheck();                       // 🔴 v6.3：廣告版都要行版本自檢（以前喺呢度 return 咗，永遠更新唔到）
     if(curView === 'ads' && state){
       state.ads = state.ads || {};
       state.ads.req = new Date().toISOString();
       schedulePersist();
-      setSync('', '叫咗 Eva 攞新廣告數・佢做完你再拉一次');
+      setSync('', '叫咗 Eva 攞新廣告數・約 30 秒自己跳，唔使再拉');
       setTimeout(function(){ if(retryTimer) clearTimeout(retryTimer); boot(); }, 1200);
       return;
     }
     if(retryTimer) clearTimeout(retryTimer);
-    // 版本自檢：背景對一對線上版本，唔同就自動攞新版（防 iOS 死抱舊 cache）
-  setTimeout(function(){
-    try{
-      fetch(location.pathname + '?_v=' + Date.now(), {cache:'no-store'})
-        .then(function(r){ return r.text(); })
-        .then(function(t){
-          var m = t.match(/id="verTag">(v[0-9.]+)</);
-          var cur = $('verTag');
-          if(m && cur && m[1] !== cur.textContent){
-            setSync('', '有新版・更新緊…');
-            setTimeout(function(){ location.reload(); }, 600);
-          }
-        }).catch(function(){});
-    }catch(e){}
-  }, 2500);
-
-  boot();
+    boot();
   }
 
   try{
@@ -1311,6 +1317,8 @@
   }catch(e){}
   boot();
   setInterval(refreshIfChanged, 5000);
+  setTimeout(verCheck, 2500);      // 開頁自檢版本一次
+  setInterval(verCheck, 300000);   // 之後每 5 分鐘一次（防 iOS 死抱舊 cache）
   document.addEventListener('visibilitychange', function(){
     if(!document.hidden) refreshIfChanged();
   });
