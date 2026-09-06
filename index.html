@@ -329,14 +329,7 @@
   </div>
 
   <div class="view" id="viewMoney">
-    <section id="moneyLocked">
-      <div class="card social-card">
-        <div class="social-title">🔒 入數簿</div>
-        <div class="social-sub">私人數簿・要密碼</div>
-        <button class="social-open" id="moneyUnlock" style="border:none;cursor:pointer">解鎖</button>
-      </div>
-    </section>
-    <section id="moneyBody" style="display:none">
+    <section id="moneyBody">
       <div class="card min-card">
         <div class="min-label">每月最低要收</div>
         <div class="min-total" id="minTotal"></div>
@@ -350,6 +343,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
+      <button class="past-link" id="autoAllocBtn">⚡ 按次序自動分配（租→廣告→儲公司→WBH儲→曉明→Franki）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -386,7 +380,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v4.7</span></div>
 </div>
 
 <div class="capture">
@@ -462,8 +456,8 @@
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
   $('pastLink').addEventListener('click', function(){ setView('done'); window.scrollTo(0,0); });
-  $('moneyUnlock').addEventListener('click', unlockMoney);
   $('addIncomeBtn').addEventListener('click', showAddIncome);
+  $('autoAllocBtn').addEventListener('click', autoAllocate);
   $('moPrev').addEventListener('click', function(){ moIdx++; renderMoney(); });
   $('moNext').addEventListener('click', function(){ moIdx--; renderMoney(); });
   document.addEventListener('click', function(ev){
@@ -505,7 +499,7 @@
 
 
   // ---------- 入數簿 ----------
-  var moneyOpen = false, moIdx = 0;
+  var moneyOpen = true, moIdx = 0;
   function fmtM(n){
     if(n === null || n === undefined || n === '') return null;
     return Number(n).toLocaleString('en-US');
@@ -539,7 +533,7 @@
     var total = (mn.franki||0)+(mn.ming||0)+(mn.rent||0)+(mn.misc||0)+(mn.ad||0)+(mn.save||0);
     $('minTotal').innerHTML = '$' + nw(fmtM(total));
     $('minBreak').innerHTML = ['Franki '+fmtM(mn.franki), '曉明 '+fmtM(mn.ming), '租 '+fmtM(mn.rent),
-                              '雜 '+fmtM(mn.misc), '廣告 '+fmtM(mn.ad), '儲 '+fmtM(mn.save)]
+                              '儲公司 '+fmtM(mn.misc), '廣告 '+fmtM(mn.ad), '儲 '+fmtM(mn.save)]
                               .map(function(s){ return nw(s); }).join(' · ');
 
     var mo = getMonth(inc, moIdx);
@@ -548,23 +542,35 @@
     $('moPrev').disabled = (moIdx >= inc.months.length - 1);
     $('moNext').disabled = (moIdx <= 0);
 
+    var items = mo.items || [];
+    var recv = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
+
     var rows = [
-      ['account','戶口總數', true],
-      ['franki','Franki 人工', false],
-      ['ming','曉明人工', false],
-      ['rent','租金', false],
-      ['save','WBH 儲', false],
-      ['ad','廣告', false],
-      ['offering','奉獻', false]
+      ['rent','① 租金'], ['ad','② 廣告'], ['misc','③ 儲公司'], ['save','④ WBH 儲'],
+      ['ming','⑤ 曉明人工'], ['franki','⑥ Franki 人工'], ['offering','奉獻（你自己入）']
     ];
-    $('moneyCard').innerHTML = rows.map(function(r){
+    var used = rows.reduce(function(a,r){ return a + (Number(mo[r[0]])||0); }, 0);
+    var left = (Number(mo.account)||0) - used;
+
+    var head = '<div class="mrow head"><span class="k">戶口總數</span>'+
+               '<span class="mval'+(mo.account==null?' empty':'')+'" data-mfield="account">'+
+               nw(mo.account==null?'—':'$'+fmtM(mo.account))+'</span></div>'+
+               '<div class="mrow"><span class="k">今個月收款</span>'+
+               '<span class="mval" style="cursor:default">'+nw('$'+fmtM(recv))+'</span></div>';
+
+    var body = rows.map(function(r){
       var v = mo[r[0]];
       var disp = (v === null || v === undefined || v === '') ? '—' : '$'+fmtM(v);
-      return '<div class="mrow'+(r[2]?' head':'')+'"><span class="k">'+r[1]+'</span>'+
+      return '<div class="mrow"><span class="k">'+r[1]+'</span>'+
              '<span class="mval'+(v==null?' empty':'')+'" data-mfield="'+r[0]+'">'+nw(disp)+'</span></div>';
     }).join('');
 
-    var items = mo.items || [];
+    var foot = '<div class="mrow" style="background:'+(left<0?'var(--danger-soft)':'var(--chip)')+'">'+
+               '<span class="k" style="font-weight:700">'+(left<0?'超咗':'未分配')+'</span>'+
+               '<span class="mval" style="cursor:default;font-weight:700;color:'+(left<0?'var(--danger)':'var(--ink)')+'">'+
+               nw('$'+fmtM(Math.abs(left)))+'</span></div>';
+
+    $('moneyCard').innerHTML = head + body + foot;
     var groups = {}, order = [];
     items.forEach(function(it){
       if(!groups[it.course]){ groups[it.course] = []; order.push(it.course); }
@@ -587,24 +593,21 @@
       : '<div class="empty">今個月未入過數</div>';
   }
 
-  function unlockMoney(){
-    var inc = state ? ensureIncome() : null;
-    if(!inc) return;
-    if(!inc.pin){
-      var p1 = prompt('第一次用——設定入數簿密碼（曉明冇呢個密碼開唔到）');
-      if(!p1) return;
-      inc.pin = String(p1).trim();
-      schedulePersist();
-    } else {
-      var p2 = prompt('入數簿密碼');
-      if(p2 === null) return;
-      if(String(p2).trim() !== inc.pin){ alert('密碼唔啱'); return; }
-    }
-    moneyOpen = true;
-    try{ sessionStorage.setItem('moneyOpen','1'); }catch(e){}
-    $('moneyLocked').style.display = 'none';
-    $('moneyBody').style.display = 'block';
-    renderMoney();
+
+  function autoAllocate(){
+    var inc = ensureIncome(), mo = getMonth(inc, moIdx), mn = inc.min;
+    var pot = Number(mo.account)||0;
+    if(!pot){ alert('先入「戶口總數」'); return; }
+    pot -= (Number(mo.offering)||0);            // 奉獻你自己入，先扣起
+    if(pot < 0) pot = 0;
+    var order = [['rent',mn.rent], ['ad',mn.ad], ['misc',mn.misc],
+                 ['save',mn.save], ['ming',mn.ming], ['franki',mn.franki]];
+    order.forEach(function(o){
+      var give = Math.min(pot, Number(o[1])||0);
+      mo[o[0]] = give > 0 ? give : null;
+      pot -= give;
+    });
+    renderMoney(); schedulePersist();
   }
 
   function showAddIncome(){
@@ -1037,8 +1040,7 @@
   setInterval(function(){ try{ $('dateLine').innerHTML = fmtHeader(); }catch(e){} }, 20000);
   var startView = 'sched';
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
-  try{ if(sessionStorage.getItem('moneyOpen') === '1'){ moneyOpen = true;
-    $('moneyLocked').style.display='none'; $('moneyBody').style.display='block'; } }catch(e){}
+  moneyOpen = true;
   if(startView === 'done') startView = 'tasks';
   setView(['sched','tasks','notes','social','money'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
