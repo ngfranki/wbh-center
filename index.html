@@ -1,31 +1,3 @@
-  function renderNotes(){
-    // 今日情報
-    var it = (state.intel || []);
-    $('intelStamp').textContent = it.length ? (it[0].d ? nw(mmdd(it[0].d)) : '') + '・' + it.length + ' 條' : '';
-    $('intelList').innerHTML = it.length
-      ? it.slice(0,12).map(function(x){
-          var cls = (x.cat === 'AI' || x.cat === '工具') ? ' b' : '';
-          return '<div class="intel"><span class="intel-cat'+cls+'">'+esc(x.cat||'情報')+'</span>'+
-                 '<div class="intel-t">'+esc(x.t||'')+'</div>'+
-                 '<div class="intel-why"><b>對你嚟講：</b>'+esc(x.why||'')+'</div>'+
-                 '<div class="intel-src">'+esc(x.src||'') +
-                 (x.url ? ' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">睇原文 ↗</a>' : '') +
-                 '</div></div>';
-        }).join('')
-      : '<div class="card"><div class="empty">Eva 每朝搵香港芳療同行動態＋你用得着嘅 AI 消息</div></div>';
-
-    // 傾過嘅嘢
-    var ns = (state.notes || []).slice().reverse();
-    var byd = {}, order = [];
-    ns.forEach(function(n){ if(!byd[n.d]){ byd[n.d]=[]; order.push(n.d); } byd[n.d].push(n); });
-    $('notesList').innerHTML = order.length
-      ? order.slice(0,10).map(function(d){
-          return '<div class="day-group">'+nw(mmdd(d))+'</div>' +
-            byd[d].map(function(n){ return '<div class="note-row">'+esc(n.text)+'</div>'; }).join('');
-        }).join('')
-      : '<div class="empty">未有紀錄</div>';
-  }
-
 <!doctype html>
 <html lang="zh-HK">
 <head>
@@ -255,9 +227,8 @@
   .intel-cat{font-size:11px; letter-spacing:.14em; font-weight:700; color:var(--accent);
              background:var(--accent-soft); display:inline-block; padding:3px 9px; border-radius:999px}
   .intel-cat.b{color:var(--wbh); background:var(--wbh-soft)}
-  .intel-t{font-family:'Noto Serif TC',serif; font-weight:700; font-size:16px;
-           line-height:1.5; margin:8px 0 5px}
-  .intel-why{font-size:13px; color:var(--ink); line-height:1.65}
+  .intel-t{font-family:'Noto Serif TC',serif; font-weight:700; font-size:16px; line-height:1.5; margin:8px 0 5px}
+  .intel-why{font-size:13px; line-height:1.65}
   .intel-why b{color:var(--accent)}
   .intel-src{font-size:11.5px; color:var(--muted); margin-top:7px}
   .intel-src a{color:var(--muted)}
@@ -400,8 +371,12 @@
 
   <div class="view" id="viewNotes">
     <section>
-      <h2>今日情報 <span class="count" id="intelStamp"></span></h2>
-      <div id="intelList"></div>
+      <h2>🌿 芳療情報 <span class="count" id="intelAStamp"></span></h2>
+      <div id="intelA"></div>
+    </section>
+    <section>
+      <h2>🤖 AI 情報 <span class="count" id="intelBStamp"></span></h2>
+      <div id="intelB"></div>
     </section>
     <section>
       <h2>傾過嘅嘢 <span class="count">Eva 做完一件實質嘢即刻記</span></h2>
@@ -461,7 +436,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v5.7</span></div>
 </div>
 
 <div class="capture">
@@ -983,6 +958,40 @@
     $('schedList').innerHTML = h;
     $('schedStamp').textContent = state.meta.eventsUpdated
       ? 'Eva '+mmdd(state.meta.eventsUpdated)+' 更新' : '';
+  }
+
+  function renderNotes(){
+    var all = state.intel || [];
+    function card(x){
+      var isAI = (x.cat === 'AI' || x.cat === '工具');
+      return '<div class="intel"><span class="intel-cat' + (isAI ? ' b' : '') + '">' +
+             esc(x.cat || '情報') + '</span>' +
+             '<div class="intel-t">' + esc(x.t || '') + '</div>' +
+             '<div class="intel-why"><b>對你嚟講：</b>' + esc(x.why || '') + '</div>' +
+             '<div class="intel-src">' + esc(x.src || '') +
+             (x.url ? ' · <a href="' + esc(x.url) + '" target="_blank" rel="noopener">睇原文</a>' : '') +
+             '</div></div>';
+    }
+    function fill(listId, stampId, arr, emptyTxt){
+      $(stampId).textContent = arr.length ? arr.length + ' 條' : '';
+      $(listId).innerHTML = arr.length
+        ? arr.slice(0,6).map(card).join('')
+        : '<div class="card"><div class="empty">' + emptyTxt + '</div></div>';
+    }
+    var ai = all.filter(function(x){ return x.cat === 'AI' || x.cat === '工具'; });
+    var ar = all.filter(function(x){ return !(x.cat === 'AI' || x.cat === '工具'); });
+    fill('intelA', 'intelAStamp', ar, 'Eva 每朝搵香港芳療市場同同行動態');
+    fill('intelB', 'intelBStamp', ai, 'Eva 每朝搵你用得着嘅 AI 消息');
+
+    var ns = (state.notes || []).slice().reverse();
+    var byd = {}, order = [];
+    ns.forEach(function(n){ if(!byd[n.d]){ byd[n.d] = []; order.push(n.d); } byd[n.d].push(n); });
+    $('notesList').innerHTML = order.length
+      ? order.slice(0,10).map(function(d){
+          return '<div class="day-group">' + nw(mmdd(d)) + '</div>' +
+                 byd[d].map(function(n){ return '<div class="note-row">' + esc(n.text) + '</div>'; }).join('');
+        }).join('')
+      : '<div class="empty">未有紀錄</div>';
   }
 
   // ---------- persist（Supabase）----------
