@@ -457,7 +457,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.0</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.1</span></div>
 </div>
 
 <div class="capture">
@@ -1023,7 +1023,19 @@
     publishTimer = setTimeout(persist, 700);
   }
 
+  // 🔴 ads／intel 由後台寫，app 寫入前要先攞返最新，唔好用手上舊嘅冚走佢
   function persist(){
+    if(!state) return;
+    fetchBoard(function(row, reached){
+      if(row && row.state){
+        if(row.state.ads)   state.ads   = row.state.ads;
+        if(row.state.intel) state.intel = row.state.intel;
+      }
+      doPersist();
+    });
+  }
+
+  function doPersist(){
     if(!state) return;
     fetch(SB+'/rest/v1/wbh_board?on_conflict=id', {
       method:'POST',
@@ -1036,10 +1048,11 @@
         if(rows && rows[0]) lastUpdated = rows[0].updated_at;
         cacheSave({state:state, updated_at:lastUpdated});
         setSync('ok', '已儲低 '+new Date().toTimeString().slice(0,5));
+        try{ renderAds(); renderNotes(); }catch(e){}
       })
       .catch(function(){
         setSync('err', '儲唔到，會再試');
-        setTimeout(persist, 4000);
+        setTimeout(doPersist, 4000);
       });
   }
 
