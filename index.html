@@ -285,6 +285,8 @@
   .inc-row{display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:15px}
   .inc-name{flex:1; min-width:0}
   .inc-d{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .inc-tag{font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:4px; padding:1px 5px; white-space:nowrap}
+  .inc-tag.off{color:#b8860b; border-color:#d9c9a0}
   .inc-amt{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-variant-numeric:tabular-nums;
            font-weight:700; min-width:64px; text-align:right}
   .inc-sub{display:flex; justify-content:flex-end; padding:2px 14px 8px; font-size:12px; color:var(--muted)}
@@ -457,7 +459,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.6</span></div>
 </div>
 
 <div class="capture">
@@ -633,6 +635,8 @@
   }
 
   // ---------- 入數簿 ----------
+  var PAYL = {kajabi:'Kajabi', payme:'PayMe', fps:'FPS', bank:'過數', cash:'現金', other:'其他'};
+  var SRCL = {ad:'廣告', old:'舊生', ref:'介紹', organic:'自然', unknown:'?'};
   var moneyOpen = true, moIdx = 0;
   function fmtM(n){
     if(n === null || n === undefined || n === '') return null;
@@ -721,6 +725,8 @@
               return '<div class="inc-row"><span class="inc-no">'+nw(String(ii+1))+'.</span>'+
                      '<span class="inc-name">'+esc(it.name)+'</span>'+
                      '<span class="inc-d">'+nw(esc(it.d||''))+'</span>'+
+                     (it.pay ? '<span class="inc-tag'+(it.pay!=='kajabi'?' off':'')+'">'+esc(PAYL[it.pay]||it.pay)+'</span>' : '')+
+                     (it.src ? '<span class="inc-tag">'+esc(SRCL[it.src]||it.src)+'</span>' : '')+
                      '<span class="inc-amt">'+nw(fmtM(it.amt))+'</span>'+
                      '<button class="del" data-incdel="'+esc(it.id)+'">✕</button></div>';
             }).join('') +
@@ -761,6 +767,14 @@
       '<div class="ed-field"><label>人名</label><input id="ncName" placeholder="學生名"></div>'+
       '<div class="ed-field"><label>日期</label><input id="ncDate" value="'+n.getDate()+'/'+(n.getMonth()+1)+'"></div>'+
       '<div class="ed-field"><label>銀碼</label><input id="ncAmt" type="number" inputmode="decimal" placeholder="0"></div>'+
+      '<div class="ed-field"><label>收款</label><select id="ncPay">'+
+        '<option value="kajabi">Kajabi</option><option value="payme">PayMe</option>'+
+        '<option value="fps">轉數快 FPS</option><option value="bank">銀行過數</option>'+
+        '<option value="cash">現金</option><option value="other">其他</option></select></div>'+
+      '<div class="ed-field"><label>邊度嚟</label><select id="ncSrc">'+
+        '<option value="ad">睇廣告</option><option value="old">舊生／舊客</option>'+
+        '<option value="ref">朋友介紹</option><option value="organic">自然／IG FB</option>'+
+        '<option value="unknown">唔清楚</option></select></div>'+
       '<div class="ed-actions"><button class="save" id="ncSave">入數</button>'+
       '<button class="cancel" id="ncCancel">收埋</button></div></div>';
     $('ncSave').addEventListener('click', function(){
@@ -768,7 +782,8 @@
       var d = ($('ncDate').value||'').trim(), a = Number($('ncAmt').value);
       if(!c || !nm || !a){ alert('班別／人名／銀碼要填齊'); return; }
       mo.items = mo.items || [];
-      mo.items.push({id:uid(), course:c, name:nm, d:d, amt:a});
+      mo.items.push({id:uid(), course:c, name:nm, d:d, amt:a,
+        pay:($('ncPay')||{}).value||'kajabi', src:($('ncSrc')||{}).value||'unknown'});
       mo.account = (Number(mo.account)||0) + a;   // 收款入戶口
       f.style.display = 'none';
       autoAllocate(true);                         // 即刻分餅仔
