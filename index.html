@@ -459,7 +459,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.7</span></div>
 </div>
 
 <div class="capture">
@@ -600,6 +600,7 @@
     $('adsSummary').textContent = a.summary || '';
     $('adsList').innerHTML = a.campaigns.map(function(c){
       var chips = [];
+      if(c.nAds != null) chips.push('<span class="ads-chip">'+nw(String(c.nAds))+' 條廣告跑緊</span>');
       if(c.ctr != null){
         var cls = c.ctr >= 2.5 ? 'ads-ok' : (c.ctr >= 1 ? 'ads-warn2' : 'ads-bad');
         chips.push('<span class="ads-chip '+cls+'">CTR '+nw(c.ctr.toFixed(2))+'%</span>');
