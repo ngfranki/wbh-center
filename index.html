@@ -504,7 +504,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.2</span></div>
 </div>
 
 <div class="capture">
@@ -1182,8 +1182,16 @@
         '<span class="day-name'+(d===today?' today-mark':'')+'">'+name+nw(dt.getMonth()+1)+'月'+nw(dt.getDate())+'日（'+WEEK[dt.getDay()]+'）</span></div>'+rows+'</div>';
     }).join('');
     $('schedList').innerHTML = h;
-    $('schedStamp').textContent = state.meta.eventsUpdated
-      ? 'Eva '+mmdd(state.meta.eventsUpdated)+' 更新' : '';
+    // 🔴 09-11：時間表舊咗＝「唔好信呢版」嘅警告，應該出喺呢版度，唔係日日 Telegram 嘈 Franki
+    var eu = state.meta.eventsUpdated, st = $('schedStamp');
+    if(!eu){ st.innerHTML = '<span style="color:var(--danger)">未同步過</span>'; }
+    else {
+      var age = Math.round((new Date(today+'T12:00:00') - new Date(eu+'T12:00:00')) / 864e5);
+      st.innerHTML = age <= 0 ? nw('Eva 今日更新')
+        : age === 1 ? nw('Eva ' + mmdd(eu) + ' 更新')
+        : '<span style="color:var(--danger)">⚠️ ' + nw(mmdd(eu)) + ' 之後冇同步過（' + nw(String(age)) +
+          ' 日）・可能唔準</span>';
+    }
   }
 
   function renderNotes(){
