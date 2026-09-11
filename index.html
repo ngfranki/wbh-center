@@ -491,7 +491,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.8</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.9</span></div>
 </div>
 
 <div class="capture">
@@ -629,7 +629,8 @@
   var LAYER = {tofu:'拉新', mofu:'培養', bofu:'成交'};
   var WORD = {dieheung:'疊香', sleep199:'好眠 $199', sleep:'好眠', naha:'NAHA', l1:'LV1', l2:'LV2',
               mbti:'MBTI', pom:'P.O.M', kcca:'KCCA', webinar:'講座'};
-  var DROP = /^(wbh|hk|mo|zh|tc|en|all|fb|ig|feed|conv|conversions?|messages?|traffic|engagement|paid|lead_?generation|leads?|student|20\d\d(-\d\d)?)$/i;
+  var DROP = /^(wbh|hk|mo|zh|tc|en|all|fb|ig|feed|conv|conversions?|messages?|traffic|engagement|paid|lead|generation|leads?|student|cold|warm|20\d\d|\d{1,2})$/i;
+  var MON = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
   // 長 campaign 名 → 人睇得明嘅短名（規則為主·對照表只做美化，新開嘅線唔會爆）
   function shortName(n){
     var layer = '';
@@ -638,7 +639,9 @@
       if(L === 'tofu' || L === 'mofu' || L === 'bofu'){ layer = LAYER[L]; return false; }
       return t && !DROP.test(t);
     }).map(function(t){
-      var L = t.toLowerCase().replace(/[^a-z0-9$]/g,'');
+      var L = t.toLowerCase().replace(/[^a-z0-9$.]/g,'');
+      var dm = L.match(/^(\d{1,2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/);   // 22sep → 9/22
+      if(dm) return MON[dm[2]] + '/' + dm[1];
       return WORD[L] || t;
     });
     var name = parts.join(' ').trim() || String(n).slice(0, 18);
