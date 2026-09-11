@@ -257,6 +257,27 @@
   .diag-next{margin-top:6px; font-size:12px}
   .diag-next b{font-weight:700}
   .ads-sum{font-size:13px; color:var(--muted); margin-top:6px}
+  /* 📊 錢分佈（09-11 Franki 要：一目了然睇到啲錢落咗去邊） */
+  .pie-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px}
+  .pie-title{font-size:13px; font-weight:700}
+  .seg{display:flex; gap:5px}
+  .seg button{font-size:11px; padding:4px 9px; border-radius:999px; border:1px solid var(--line);
+    background:transparent; color:var(--muted); font-family:inherit; cursor:pointer}
+  .seg button.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
+  .pie-wrap{display:flex; align-items:center; gap:13px}
+  .pie-svg{flex:none; width:126px; height:126px}
+  .pie-leg{flex:1; min-width:0; display:flex; flex-direction:column; gap:7px}
+  .leg-row{display:flex; align-items:center; gap:7px; font-size:12px; line-height:1.3}
+  .leg-dot{flex:none; width:9px; height:9px; border-radius:3px}
+  .leg-n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .leg-v{flex:none; font-variant-numeric:tabular-nums; font-weight:700}
+  .leg-p{flex:none; width:36px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums}
+  .bud{margin-top:14px; padding-top:13px; border-top:1px dashed var(--line)}
+  .bud-bar{height:10px; border-radius:999px; background:var(--chip); overflow:hidden; position:relative}
+  .bud-fill{height:100%; border-radius:999px}
+  .bud-pace{position:absolute; top:-3px; width:2px; height:16px; background:var(--ink); opacity:.45}
+  .bud-row{display:flex; justify-content:space-between; align-items:baseline; font-size:12px; margin-bottom:7px}
+  .bud-note{font-size:12px; line-height:1.55; margin-top:8px}
   .ads-warn{font-size:12px; color:var(--muted); line-height:1.7; margin:14px 2px 10px}
   .min-card{padding:18px 20px; text-align:center}
   .min-label{font-size:12px; color:var(--muted); letter-spacing:.2em}
@@ -400,6 +421,17 @@
         <div class="min-total" id="adsSpend">—</div>
         <div class="ads-sum" id="adsSummary"></div>
       </div>
+      <div class="card" id="adsPieCard" style="margin-top:12px; padding:16px 18px; display:none">
+        <div class="pie-head">
+          <span class="pie-title">啲錢落咗去邊</span>
+          <span class="seg"><button data-pie="month" id="pieMonth">本月</button><button data-pie="w7" id="pieW7">近 7 日</button></span>
+        </div>
+        <div class="pie-wrap">
+          <svg class="pie-svg" id="pieSvg" viewBox="0 0 200 200" aria-hidden="true"></svg>
+          <div class="pie-leg" id="pieLeg"></div>
+        </div>
+        <div class="bud" id="budBox"></div>
+      </div>
       <div id="adsList" style="margin-top:14px"></div>
       <div class="ads-warn">⚠️ 診斷跟刀姐框架（夠唔夠數據 → 受眾燒燶未 → 素材／角度 → 可唔可以加錢）。Meta 自報數會虛高，真係賺定蝕要對返 Kajabi 實際入數。</div>
       <a class="past-link" href="https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1005692020589748"
@@ -459,7 +491,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.7</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v6.8</span></div>
 </div>
 
 <div class="capture">
@@ -537,6 +569,14 @@
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
   $('tabAds').addEventListener('click', function(){ setView('ads'); renderAds(); });
+  ['pieMonth','pieW7'].forEach(function(id){
+    var b = $(id);
+    if(b) b.addEventListener('click', function(){
+      pieMode = b.getAttribute('data-pie');
+      try{ localStorage.setItem('pieMode', pieMode); }catch(e){}
+      renderPie();
+    });
+  });
   $('pastLink').addEventListener('click', function(){ setView('done'); window.scrollTo(0,0); });
   $('addIncomeBtn').addEventListener('click', showAddIncome);
   $('autoAllocBtn').addEventListener('click', autoAllocate);
@@ -581,6 +621,96 @@
   });
 
 
+  // ---------- 📊 錢分佈餅圖（09-11）----------
+  var pieMode = 'month';
+  try{ pieMode = localStorage.getItem('pieMode') || 'month'; }catch(e){}
+  if(pieMode !== 'w7') pieMode = 'month';
+  var PIE_COL = ['#5C8465','#C07A3A','#D4AF6A','#8A9E7E','#B3705C','#7F94A6','#A88C6B'];
+  var LAYER = {tofu:'拉新', mofu:'培養', bofu:'成交'};
+  var WORD = {dieheung:'疊香', sleep199:'好眠 $199', sleep:'好眠', naha:'NAHA', l1:'LV1', l2:'LV2',
+              mbti:'MBTI', pom:'P.O.M', kcca:'KCCA', webinar:'講座'};
+  var DROP = /^(wbh|hk|mo|zh|tc|en|all|fb|ig|feed|conv|conversions?|messages?|traffic|engagement|paid|lead_?generation|leads?|student|20\d\d(-\d\d)?)$/i;
+  // 長 campaign 名 → 人睇得明嘅短名（規則為主·對照表只做美化，新開嘅線唔會爆）
+  function shortName(n){
+    var layer = '';
+    var parts = String(n).split(/[-_]+/).filter(function(t){
+      var L = t.toLowerCase();
+      if(L === 'tofu' || L === 'mofu' || L === 'bofu'){ layer = LAYER[L]; return false; }
+      return t && !DROP.test(t);
+    }).map(function(t){
+      var L = t.toLowerCase().replace(/[^a-z0-9$]/g,'');
+      return WORD[L] || t;
+    });
+    var name = parts.join(' ').trim() || String(n).slice(0, 18);
+    return {name:name, layer:layer};
+  }
+  function pieData(){
+    var cs = (state.ads && state.ads.campaigns) || [];
+    var key = pieMode === 'month' ? 'mSpend' : 'spend';
+    var rows = cs.map(function(c){
+      var s = shortName(c.n);
+      return {v:Number(c[key]) || 0, name:s.name, layer:s.layer, lv:(c.diag && c.diag.lv) || 'wait'};
+    }).filter(function(r){ return r.v > 0; }).sort(function(a,b){ return b.v - a.v; });
+    var tot = rows.reduce(function(a,b){ return a + b.v; }, 0);
+    return {rows:rows, tot:tot};
+  }
+  function renderPie(){
+    var card = $('adsPieCard');
+    if(!card) return;
+    var d = pieData();
+    if(!d.tot){ card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    $('pieMonth').classList.toggle('on', pieMode === 'month');
+    $('pieW7').classList.toggle('on', pieMode === 'w7');
+
+    // donut：用 stroke-dasharray 畫，唔使砌 arc path
+    var R = 66, C = 2 * Math.PI * R, off = 0;
+    var segs = d.rows.map(function(r, i){
+      var len = C * (r.v / d.tot);
+      var el = '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="' + PIE_COL[i % PIE_COL.length] +
+               '" stroke-width="26" stroke-dasharray="' + (len - 1.5).toFixed(2) + ' ' + (C - len + 1.5).toFixed(2) +
+               '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 100 100)"></circle>';
+      off += len; return el;
+    }).join('');
+    $('pieSvg').innerHTML = segs +
+      '<text x="100" y="94" text-anchor="middle" style="font-size:13px;fill:var(--muted)">' +
+        (pieMode === 'month' ? '本月' : '近 7 日') + '</text>' +
+      '<text x="100" y="117" text-anchor="middle" style="font-size:21px;font-weight:800;fill:var(--ink);font-variant-numeric:tabular-nums">$' +
+        fmtM(Math.round(d.tot)) + '</text>';
+
+    var MARK = {ok:'✅', warn:'⚠️', bad:'🔴', wait:'⏳'};
+    $('pieLeg').innerHTML = d.rows.map(function(r, i){
+      return '<div class="leg-row"><span class="leg-dot" style="background:' + PIE_COL[i % PIE_COL.length] + '"></span>' +
+             '<span class="leg-n">' + (MARK[r.lv] || '') + ' ' + esc(r.name) +
+             (r.layer ? ' <span style="color:var(--muted)">·' + r.layer + '</span>' : '') + '</span>' +
+             '<span class="leg-v">' + nw('$' + fmtM(Math.round(r.v))) + '</span>' +
+             '<span class="leg-p">' + nw(Math.round(r.v / d.tot * 100) + '%') + '</span></div>';
+    }).join('');
+    renderBudget(d);
+  }
+  // 預算條：預算直接用「資金」版嗰個「廣告」數（唔另開設定，一處改兩處變）
+  function renderBudget(d){
+    var box = $('budBox'), m = (state.ads && state.ads.month) || null;
+    var budget = Number(((state.income || {}).min || {}).ad) || 0;
+    if(!box) return;
+    if(!m || m.spend == null || !budget){ box.innerHTML = ''; return; }
+    var used = m.spend, pct = used / budget, pace = m.day / m.days;
+    var proj = Math.round(used / m.day * m.days);           // 照呢個速度，成個月會燒幾多
+    var over = proj > budget * 1.05;
+    var col = pct > 1 ? 'var(--danger)' : (over ? 'var(--wbh)' : 'var(--accent)');
+    box.innerHTML =
+      '<div class="bud-row"><span style="color:var(--muted)">本月廣告預算</span>' +
+        '<span style="font-weight:700">' + nw('$' + fmtM(Math.round(used))) + ' / ' + nw('$' + fmtM(budget)) + '</span></div>' +
+      '<div class="bud-bar"><div class="bud-fill" style="width:' + Math.min(100, pct * 100).toFixed(1) + '%;background:' + col + '"></div>' +
+        '<div class="bud-pace" style="left:' + (pace * 100).toFixed(1) + '%" title="今日應該去到嘅位"></div></div>' +
+      '<div class="bud-note" style="color:' + (over ? 'var(--danger)' : 'var(--muted)') + '">' +
+        (over ? '⚠️ 照呢個速度，成個月會燒 ' + nw('$' + fmtM(proj)) + '——超 ' + nw('$' + fmtM(proj - budget)) +
+                '。想守住 ' + nw('$' + fmtM(budget)) + '，之後 ' + nw(String(m.days - m.day)) + ' 日每日最多 ' +
+                nw('$' + fmtM(Math.max(0, Math.round((budget - used) / Math.max(1, m.days - m.day))))) + '。'
+              : '照呢個速度成個月約 ' + nw('$' + fmtM(proj)) + '，喺預算內。豎線＝今日應該去到嘅位。') +
+      '</div>';
+  }
+
   // ---------- 廣告成效 ----------
   function renderAds(){
     if(!state) return;
@@ -590,6 +720,7 @@
       $('adsStamp').textContent = '';
       $('adsSummary').textContent = '';
       $('adsList').innerHTML = '<div class="card"><div class="empty">向下拉即刻攞最新數</div></div>';
+      var pc = $('adsPieCard'); if(pc) pc.style.display = 'none';
       return;
     }
     var waiting = a.req && tsOf(a.req) > tsOf(a.updatedAt);
@@ -633,6 +764,7 @@
              ' <span style="color:var(--muted)">·</span> '+res+'</div>'+
              '<div class="ads-chips">'+chips.join('')+'</div>'+cks+dg+'</div>';
     }).join('');
+    renderPie();
   }
 
   // ---------- 入數簿 ----------
