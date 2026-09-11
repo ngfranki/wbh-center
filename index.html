@@ -257,6 +257,8 @@
   .diag-next{margin-top:6px; font-size:12px}
   .diag-next b{font-weight:700}
   .ads-sum{font-size:13px; color:var(--muted); margin-top:6px}
+  .ads-miss{font-size:12px; color:var(--danger); background:var(--danger-soft);
+    border-radius:8px; padding:6px 10px; margin:8px 0 2px; line-height:1.5}
   /* 📊 錢分佈（09-11 Franki 要：一目了然睇到啲錢落咗去邊） */
   .pie-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px}
   .pie-title{font-size:13px; font-weight:700}
@@ -504,7 +506,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.2</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.3</span></div>
 </div>
 
 <div class="capture">
@@ -802,9 +804,12 @@
                  '<div class="diag-why">'+nw(esc(c.diag.why||''))+'</div>'+
                  (c.diag.next ? '<div class="diag-next"><b>下一步：</b>'+esc(c.diag.next)+'</div>' : '')+
                '</div>' : '';
+      var miss = (c.goal && c.goalRes === 0)
+        ? '<div class="ads-miss">🎯 呢條線嘅目標係「'+esc(c.goal)+'」，但呢段期間<b>一個都冇</b>。下面個數字係其他動作，唔係佢想要嗰樣。</div>'
+        : '';
       return '<div class="ads-card"><div class="ads-name">'+esc(c.n)+'</div>'+
              '<div class="ads-money"><b>'+nw('$'+fmtM(Math.round(c.spend||0)))+'</b>'+
-             ' <span style="color:var(--muted)">·</span> '+res+'</div>'+
+             ' <span style="color:var(--muted)">·</span> '+res+'</div>'+ miss +
              '<div class="ads-chips">'+chips.join('')+'</div>'+cks+dg+'</div>';
     }).join('');
     renderPie();
