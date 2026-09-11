@@ -272,6 +272,17 @@
   .leg-n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .leg-v{flex:none; font-variant-numeric:tabular-nums; font-weight:700}
   .leg-p{flex:none; width:38px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums}
+  /* 漏斗分層橫條（09-11 Franki 要） */
+  .fun{margin-top:14px; padding-top:13px; border-top:1px dashed var(--line)}
+  .fun-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:8px}
+  .fun-t{font-size:12px; font-weight:700}
+  .fun-hint{font-size:11px; color:var(--muted); text-align:right}
+  .fun-bar{display:flex; height:26px; border-radius:8px; overflow:hidden; background:var(--chip)}
+  .fun-seg{display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+    color:#FFFDF8; white-space:nowrap; overflow:hidden}
+  .fun-leg{display:flex; justify-content:space-between; gap:6px; margin-top:9px; font-size:11px}
+  .fun-item{display:flex; align-items:center; gap:5px; min-width:0; font-variant-numeric:tabular-nums}
+  .fun-dot{flex:none; width:8px; height:8px; border-radius:2px}
   .bud{margin-top:14px; padding-top:13px; border-top:1px dashed var(--line)}
   .bud-bar{height:10px; border-radius:999px; background:var(--chip); overflow:hidden; position:relative}
   .bud-fill{height:100%; border-radius:999px}
@@ -431,6 +442,7 @@
           <svg class="pie-svg" id="pieSvg" viewBox="0 0 200 200" aria-hidden="true"></svg>
           <div class="pie-leg" id="pieLeg"></div>
         </div>
+        <div class="fun" id="funBox"></div>
         <div class="bud" id="budBox"></div>
       </div>
       <div id="adsList" style="margin-top:14px"></div>
@@ -492,7 +504,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.0</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.1</span></div>
 </div>
 
 <div class="capture">
@@ -690,7 +702,34 @@
              '<span class="leg-v">' + nw('$' + fmtM(Math.round(r.v))) + '</span>' +
              '<span class="leg-p">' + nw(Math.round(r.v / d.tot * 100) + '%') + '</span></div>';
     }).join('');
+    renderFunnel(d);
     renderBudget(d);
+  }
+  // 漏斗分層：拉新（未識你）→ 培養（信緊你）→ 成交（就快落單）
+  // 🔴 層數係跟 campaign 名入面嘅 TOFU／MOFU／BOFU 認，即係話改錯名就標錯——所以下面寫明出處。
+  var FUN_ORDER = ['拉新','培養','成交','未分層'];
+  var FUN_COL = {'拉新':'#7E9885', '培養':'#B98A47', '成交':'#8C5A2B', '未分層':'#9A9183'};
+  function renderFunnel(d){
+    var box = $('funBox');
+    if(!box) return;
+    var g = {};
+    d.rows.forEach(function(r){ var k = r.layer || '未分層'; g[k] = (g[k] || 0) + r.v; });
+    var keys = FUN_ORDER.filter(function(k){ return g[k] > 0; });
+    // 一層都認唔到（全部 campaign 名都冇 TOFU／MOFU／BOFU）＝唔好畫個得一嚿嘢嘅條
+    if(keys.length < 2){ box.innerHTML = ''; return; }
+    var tot = keys.reduce(function(a,k){ return a + g[k]; }, 0);
+    box.innerHTML =
+      '<div class="fun-head"><span class="fun-t">漏斗分層</span>' +
+        '<span class="fun-hint">跟 campaign 名認</span></div>' +
+      '<div class="fun-bar">' + keys.map(function(k){
+          var pct = g[k] / tot * 100;
+          return '<div class="fun-seg" style="width:' + pct.toFixed(1) + '%;background:' + FUN_COL[k] + '">' +
+                 (pct >= 15 ? esc(k) + ' ' + nw(Math.round(pct) + '%') : '') + '</div>';
+        }).join('') + '</div>' +
+      '<div class="fun-leg">' + keys.map(function(k){
+          return '<div class="fun-item"><span class="fun-dot" style="background:' + FUN_COL[k] + '"></span>' +
+                 esc(k) + ' ' + nw('$' + fmtM(Math.round(g[k]))) + '</div>';
+        }).join('') + '</div>';
   }
   // 預算條：預算直接用「資金」版嗰個「廣告」數（唔另開設定，一處改兩處變）
   function renderBudget(d){
