@@ -257,13 +257,19 @@
   .diag-next{margin-top:6px; font-size:12px}
   .diag-next b{font-weight:700}
   /* 📁 任務資料夾（09-12 Franki 要：自己開 folder／改名／喺入面開任務） */
-  .fold-row{display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px;
+  .fold-wrap{display:flex; align-items:center; gap:6px; margin:0 2px}
+  .fold-label{flex:none; font-size:12px; color:var(--muted); letter-spacing:.15em; margin-right:2px}
+  .fold-row{display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px; flex:1; min-width:0;
     -webkit-overflow-scrolling:touch; scrollbar-width:none}
   .fold-row::-webkit-scrollbar{display:none}
   .fold{flex:none; font-size:12.5px; padding:6px 12px; border-radius:999px; border:1px solid var(--line);
     background:var(--card); color:var(--muted); font-family:inherit; cursor:pointer; white-space:nowrap}
   .fold.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
-  .fold .n{opacity:.65; margin-left:4px; font-variant-numeric:tabular-nums}
+  .fold .n{margin-left:5px; font-variant-numeric:tabular-nums; font-weight:700;
+    background:var(--chip); color:var(--ink); border-radius:999px; padding:1px 7px; font-size:11.5px}
+  .fold.on .n{background:rgba(255,255,255,.24); color:var(--on-accent)}
+  .fold .n.clear{background:transparent; color:var(--done); font-weight:400; padding:1px 3px}
+  .fold.on .n.clear{color:var(--on-accent); opacity:.7}
   .fold.add{border-style:dashed; color:var(--accent)}
   .fold-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:-4px 2px 10px; font-size:12px; color:var(--muted)}
   .fold-tools button{font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
@@ -414,7 +420,7 @@
   <div class="view" id="viewTasks">
     <section>
       <h2>未做 <span class="count" id="todoCount"></span></h2>
-      <div class="fold-row" id="foldRow"></div>
+      <div class="fold-wrap"><span class="fold-label">未做</span><div class="fold-row" id="foldRow"></div></div>
       <div class="fold-tools" id="foldTools" style="display:none"></div>
       <div class="sort-row">
         <span class="sort-label">排序</span>
@@ -525,7 +531,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.4</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.5</span></div>
 </div>
 
 <div class="capture">
@@ -1113,8 +1119,11 @@
     if(cnt.none) chips.push(['none','未分類']);
     fs.forEach(function(f){ chips.push([f.id, f.name]); });
     row.innerHTML = chips.map(function(c){
+        var k = cnt[c[0]] || 0;
+        // 🔴 呢個數一直都係「未完成」（renderFolders 只收到 !done 嘅任務）；清晒就出 ✓，唔好出個 0 令人以為冇嘢
+        var badge = k ? '<span class="n">'+nw(String(k))+'</span>' : '<span class="n clear">✓</span>';
         return '<button class="fold'+(curFolder===c[0]?' on':'')+'" data-fold="'+esc(c[0])+'">'+
-               esc(c[1])+'<span class="n">'+nw(String(cnt[c[0]]||0))+'</span></button>';
+               esc(c[1])+badge+'</button>';
       }).join('') + '<button class="fold add" data-foldnew="1">＋ 新資料夾</button>';
     if(curFolder !== 'all' && curFolder !== 'none' && folderName(curFolder)){
       tools.style.display = 'flex';
