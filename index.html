@@ -256,6 +256,23 @@
   .diag-why{color:var(--muted); font-size:12px}
   .diag-next{margin-top:6px; font-size:12px}
   .diag-next b{font-weight:700}
+  /* 📁 任務資料夾（09-12 Franki 要：自己開 folder／改名／喺入面開任務） */
+  .fold-row{display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none}
+  .fold-row::-webkit-scrollbar{display:none}
+  .fold{flex:none; font-size:12.5px; padding:6px 12px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--muted); font-family:inherit; cursor:pointer; white-space:nowrap}
+  .fold.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
+  .fold .n{opacity:.65; margin-left:4px; font-variant-numeric:tabular-nums}
+  .fold.add{border-style:dashed; color:var(--accent)}
+  .fold-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:-4px 2px 10px; font-size:12px; color:var(--muted)}
+  .fold-tools button{font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+    background:transparent; color:var(--muted); font-family:inherit; cursor:pointer}
+  .fold-pick{display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px; background:var(--chip);
+    border-radius:12px; margin:6px 0 2px}
+  .fold-pick button{font-size:12px; padding:5px 11px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); font-family:inherit; cursor:pointer}
+  .fold-pick button.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
   .ads-sum{font-size:13px; color:var(--muted); margin-top:6px}
   .ads-miss{font-size:12px; color:var(--danger); background:var(--danger-soft);
     border-radius:8px; padding:6px 10px; margin:8px 0 2px; line-height:1.5}
@@ -397,6 +414,8 @@
   <div class="view" id="viewTasks">
     <section>
       <h2>未做 <span class="count" id="todoCount"></span></h2>
+      <div class="fold-row" id="foldRow"></div>
+      <div class="fold-tools" id="foldTools" style="display:none"></div>
       <div class="sort-row">
         <span class="sort-label">排序</span>
         <button class="chip" data-sort="imp" id="sortImp">重要事項</button>
@@ -506,7 +525,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.4</span></div>
 </div>
 
 <div class="capture">
@@ -538,7 +557,9 @@
   var sortMode = 'imp';
   try{ sortMode = localStorage.getItem('sortMode') || 'imp'; }catch(e){}
   if(['imp','due','ct'].indexOf(sortMode) < 0) sortMode = 'imp';
-  var editing = null;          // {id, kind: 'mins'|'due'|'plan'}
+  var editing = null;          // {id, kind: 'plan'|'fold'}
+  var curFolder = 'all';       // 'all' | 'none'（未分類）| folder id
+  try{ curFolder = localStorage.getItem('curFolder') || 'all'; }catch(e){}
   var armedDel = null, armedTimer = null;
 
   var $ = function(id){ return document.getElementById(id); };
@@ -1002,6 +1023,9 @@
       var ka = dtKey(a), kb = dtKey(b);
       return ka < kb ? -1 : ka > kb ? 1 : 0;
     };
+    renderFolders(todos);
+    if(curFolder === 'none') todos = todos.filter(function(t){ return !t.fid || !folderName(t.fid); });
+    else if(curFolder !== 'all') todos = todos.filter(function(t){ return t.fid === curFolder; });
     var todayTasks = todos.filter(isToday).sort(cmp);
     var laterTasks = todos.filter(function(t){ return !isToday(t); }).sort(cmp);
     ['sortImp','sortDue','sortCt'].forEach(function(id){
@@ -1010,7 +1034,8 @@
     });
     var h = '';
     if(!todos.length){
-      h = '<div class="empty">乜都清晒 ✨ 諗到嘢就喺下面記低</div>';
+      h = '<div class="empty">'+(curFolder==='all' ? '乜都清晒 ✨ 諗到嘢就喺下面記低'
+            : '呢個資料夾暫時空咗——喺下面記低就會入呢度')+'</div>';
     } else {
       if(todayTasks.length){
         h += '<div class="group-label">今日</div>' + todayTasks.map(function(t){ return taskRow(t, today); }).join('');
@@ -1065,6 +1090,52 @@
     }
   }
 
+  // ---------- 📁 資料夾 ----------
+  function folders(){
+    if(!Array.isArray(state.folders)) state.folders = [];
+    return state.folders;
+  }
+  function folderName(fid){
+    var f = folders().filter(function(x){ return x.id === fid; })[0];
+    return f ? f.name : null;
+  }
+  function renderFolders(todos){
+    var fs = folders(), row = $('foldRow'), tools = $('foldTools');
+    // 揀咗嘅資料夾俾人刪咗＝跌返「全部」，唔好卡喺一個唔存在嘅 view
+    if(curFolder !== 'all' && curFolder !== 'none' && !folderName(curFolder)) curFolder = 'all';
+    var cnt = {all: todos.length, none: 0};
+    fs.forEach(function(f){ cnt[f.id] = 0; });
+    todos.forEach(function(t){
+      var k = (t.fid && cnt[t.fid] !== undefined) ? t.fid : 'none';
+      cnt[k]++;
+    });
+    var chips = [['all','全部']];
+    if(cnt.none) chips.push(['none','未分類']);
+    fs.forEach(function(f){ chips.push([f.id, f.name]); });
+    row.innerHTML = chips.map(function(c){
+        return '<button class="fold'+(curFolder===c[0]?' on':'')+'" data-fold="'+esc(c[0])+'">'+
+               esc(c[1])+'<span class="n">'+nw(String(cnt[c[0]]||0))+'</span></button>';
+      }).join('') + '<button class="fold add" data-foldnew="1">＋ 新資料夾</button>';
+    if(curFolder !== 'all' && curFolder !== 'none' && folderName(curFolder)){
+      tools.style.display = 'flex';
+      tools.innerHTML = '<span>記低嘅嘢會直接入「'+esc(folderName(curFolder))+'」</span>'+
+        '<button data-foldrename="1">改名</button><button data-folddel="1">刪資料夾</button>';
+    } else { tools.style.display = 'none'; tools.innerHTML = ''; }
+    var inp = $('captureInput');
+    if(inp) inp.placeholder = (curFolder !== 'all' && curFolder !== 'none' && folderName(curFolder))
+      ? '記入「'+folderName(curFolder)+'」…' : '諗到咩，即刻寫低…';
+  }
+  function newFolder(){
+    var n = prompt('新資料夾叫咩名？（例：講座 9/22、廣告、寄嘢）');
+    if(n === null) return;
+    n = n.trim(); if(!n) return;
+    var f = {id: uid(), name: n};
+    folders().push(f);
+    curFolder = f.id;
+    try{ localStorage.setItem('curFolder', curFolder); }catch(e){}
+    render(); schedulePersist();
+  }
+
   function taskRow(t, today){
     var doneCls = t.done ? ' done' : '';
     var metas = [];
@@ -1086,6 +1157,9 @@
       } else {
         metas.push('<button class="chip on" data-act="ming" data-id="'+t.id+'">📨 '+(t.ming.at?nw(mmdd(t.ming.at))+' ':'')+'已通知曉明</button>');
       }
+      var fn = t.fid ? folderName(t.fid) : null;
+      metas.push('<button class="chip'+(fn?' on':'')+'" data-act="fold" data-id="'+t.id+'">'+
+                 (fn ? '📁 '+esc(fn) : '📁 分類') + '</button>');
       if(t.due){
         metas.push('<span class="stamp" style="color:'+(t.due < today ? 'var(--danger)' : 'var(--muted)')+'">⚑ 死線 '+nw(mmdd(t.due))+'</span>');
       }
@@ -1122,6 +1196,15 @@
   }
   function editorRow(t){
     var today = localDateStr(new Date());
+    if(editing.kind === 'fold'){
+      var fs = folders();
+      return '<div class="fold-pick">' +
+        '<button class="'+(!t.fid?'on':'')+'" data-act="set-fold" data-id="'+t.id+'" data-fid="">未分類</button>' +
+        fs.map(function(f){
+          return '<button class="'+(t.fid===f.id?'on':'')+'" data-act="set-fold" data-id="'+t.id+'" data-fid="'+esc(f.id)+'">'+esc(f.name)+'</button>';
+        }).join('') +
+        '<button data-act="fold-new-from" data-id="'+t.id+'">＋ 開新資料夾</button></div>';
+    }
     if(editing.kind === 'plan'){
       return '<div class="editor">'+
         '<div class="ed-field"><label>邊一日做</label><input type="date" id="edPlanDate" value="'+((t.plan&&t.plan.date)||today)+'"></div>'+
@@ -1290,6 +1373,12 @@
     // 後台有、本機冇（Telegram／曉明加嘅）→ 放最頂，除非係本機啱啱刪咗
     var fresh = out.tasks.filter(function(t){ return !lmap[t.id] && !tombIds[t.id]; });
     out.tasks = fresh.concat(merged);
+    // folders 聯集（本機啱啱刪咗嘅唔好翻生）
+    var lf = local.folders || [], rf = Array.isArray(out.folders) ? out.folders : [];
+    var fmap = {};
+    rf.forEach(function(f){ if(!tombIds[f.id]) fmap[f.id] = f; });
+    lf.forEach(function(f){ fmap[f.id] = f; });
+    out.folders = Object.keys(fmap).map(function(k){ return fmap[k]; });
     // notes／weekly 聯集
     var seen = {};
     out.notes.forEach(function(n){ seen[n.d+'|'+n.text] = 1; });
@@ -1351,6 +1440,7 @@
     if(!Array.isArray(state.events)) state.events = [];
     if(!Array.isArray(state.notes)) state.notes = [];
     if(!Array.isArray(state.weekly)) state.weekly = [];
+    if(!Array.isArray(state.folders)) state.folders = [];
     if(!state.meta) state.meta = {};
     lastUpdated = row.updated_at;
   }
@@ -1402,6 +1492,36 @@
   }
 
   document.addEventListener('click', function(ev){
+    var fb = ev.target.closest('[data-fold]');
+    if(fb){
+      curFolder = fb.getAttribute('data-fold');
+      try{ localStorage.setItem('curFolder', curFolder); }catch(e){}
+      editing = null; render(); return;
+    }
+    if(ev.target.closest('[data-foldnew]')){ newFolder(); return; }
+    if(ev.target.closest('[data-foldrename]')){
+      var cf = folders().filter(function(x){ return x.id === curFolder; })[0];
+      if(cf){
+        var nn = prompt('改做咩名？', cf.name);
+        if(nn !== null && nn.trim()){ cf.name = nn.trim(); render(); schedulePersist(); }
+      }
+      return;
+    }
+    if(ev.target.closest('[data-folddel]')){
+      var cf2 = folders().filter(function(x){ return x.id === curFolder; })[0];
+      if(cf2){
+        var inside = state.tasks.filter(function(t){ return !t.done && t.fid === cf2.id; }).length;
+        if(confirm('刪咗資料夾「'+cf2.name+'」？\n入面 '+inside+' 件任務唔會刪，會變返「未分類」。')){
+          state.folders = folders().filter(function(x){ return x.id !== cf2.id; });
+          (state.tomb = state.tomb || []).push({id: cf2.id, t: Date.now()});
+          state.tasks.forEach(function(t){ if(t.fid === cf2.id) delete t.fid; });
+          curFolder = 'all';
+          try{ localStorage.setItem('curFolder', curFolder); }catch(e){}
+          render(); schedulePersist();
+        }
+      }
+      return;
+    }
     var sbtn = ev.target.closest('[data-sort]');
     if(sbtn){
       sortMode = sbtn.getAttribute('data-sort');
@@ -1455,6 +1575,21 @@
       else if(t.ming.status === 'pending'){ delete t.ming; }
       else { t.ming = {status:'pending'}; }
       render(); schedulePersist();
+    } else if(act === 'fold'){
+      editing = (editing && editing.id === t.id && editing.kind === 'fold') ? null : {id:t.id, kind:'fold'};
+      render();
+    } else if(act === 'set-fold'){
+      var fid = btn.getAttribute('data-fid');
+      if(fid) t.fid = fid; else delete t.fid;
+      editing = null; render(); schedulePersist();
+    } else if(act === 'fold-new-from'){
+      var nm = prompt('新資料夾叫咩名？');
+      if(nm !== null && nm.trim()){
+        var nf = {id: uid(), name: nm.trim()};
+        folders().push(nf); t.fid = nf.id;
+        editing = null; render(); schedulePersist();
+      }
+      return;
     } else if(act === 'edit-plan'){
       editing = {id:t.id, kind:'plan'}; render();
     } else if(act === 'save-plan'){
@@ -1480,7 +1615,9 @@
     var text = input.value.trim();
     if(!text) return;
     var nowD = new Date();
-    state.tasks.unshift({ id:uid(), text:text, created:localDateStr(nowD), ct:pad(nowD.getHours())+':'+pad(nowD.getMinutes()), today:false, done:false, doneAt:null, m:Date.now() });
+    var nt = { id:uid(), text:text, created:localDateStr(nowD), ct:pad(nowD.getHours())+':'+pad(nowD.getMinutes()), today:false, done:false, doneAt:null, m:Date.now() };
+    if(curFolder !== 'all' && curFolder !== 'none' && folderName(curFolder)) nt.fid = curFolder;
+    state.tasks.unshift(nt);
     input.value = '';
     try{ localStorage.removeItem('draft'); }catch(e){}
     setView('tasks');
