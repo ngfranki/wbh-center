@@ -531,7 +531,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.6</span></div>
 </div>
 
 <div class="capture">
@@ -1361,17 +1361,23 @@
     if(!out.intel && local.intel) out.intel = local.intel;
     // income：本機為準
     if(local.income) out.income = local.income;
-    // tombstones：本機刪咗嘅 task，後台再出現都唔要（7 日內）
-    var tomb = (local.tomb || []).filter(function(x){ return Date.now() - x.t < 7*864e5; });
-    var tombIds = {}; tomb.forEach(function(x){ tombIds[x.id] = 1; });
-    out.tomb = tomb;
+    // 🔴 v7.6：tombstone 要兩邊聯集。舊版 out.tomb 只留本機嗰份＝冚走對方部機嘅刪除紀錄，
+    //    結果曉明喺佢部機刪咗嘅嘢，Franki 部機一寫入就翻生。
+    var tombIds = {};
+    (remote && remote.tomb || []).concat(local.tomb || []).forEach(function(x){
+      if(x && x.id && Date.now() - x.t < 7*864e5) tombIds[x.id] = x;
+    });
+    out.tomb = Object.keys(tombIds).map(function(k){ return tombIds[k]; });
     // tasks
     var rmap = {}; out.tasks.forEach(function(t){ rmap[t.id] = t; });
     var lmap = {}; (local.tasks || []).forEach(function(t){ lmap[t.id] = t; });
     var merged = [];
     (local.tasks || []).forEach(function(lt){
       var rt = rmap[lt.id];
-      if(!rt){ merged.push(lt); return; }                // 本機新加（或後台未見）→ 保留
+      if(!rt){
+        if(tombIds[lt.id]) return;                       // 對方部機刪咗＝真係要走，唔好翻生
+        merged.push(lt); return;                         // 否則＝本機新加，後台未見到，保留
+      }
       var pick = (rt.m && lt.m && rt.m > lt.m) ? JSON.parse(JSON.stringify(rt)) : JSON.parse(JSON.stringify(lt));
       // Eva 推進咗嘅狀態一律吸收（唔好俾手上舊 pending 冚返轉頭）
       if(rt.plan && rt.plan.status === 'added' && pick.plan && pick.plan.status === 'pending' && rt.plan.date === pick.plan.date) pick.plan = rt.plan;
@@ -1386,7 +1392,7 @@
     var lf = local.folders || [], rf = Array.isArray(out.folders) ? out.folders : [];
     var fmap = {};
     rf.forEach(function(f){ if(!tombIds[f.id]) fmap[f.id] = f; });
-    lf.forEach(function(f){ fmap[f.id] = f; });
+    lf.forEach(function(f){ if(!tombIds[f.id]) fmap[f.id] = f; });   // 對方刪咗嘅夾唔好翻生
     out.folders = Object.keys(fmap).map(function(k){ return fmap[k]; });
     // notes／weekly 聯集
     var seen = {};
