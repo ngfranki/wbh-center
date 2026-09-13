@@ -601,7 +601,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.2</span></div>
 </div>
 
 <div class="capture">
@@ -907,7 +907,8 @@
     if(gl){
       var g = L.gap;
       if(g && g.target){
-        var left = Math.max(1, Math.round((new Date(g.deadline + 'T23:59:59') - new Date()) / 864e5) + 1);
+        // 含今日：由而家數到死線嗰日尾，向上取整（round+1 會多計一日）
+        var left = Math.max(1, Math.ceil((new Date(g.deadline + 'T23:59:59') - new Date()) / 864e5));
         var gap = (g.target || 0) - (g.got || 0);
         gl.innerHTML = nw('仲差 $' + fmtM(gap)) + '・剩 ' + nw(String(left)) + ' 日・日均要 ' +
           nw('$' + fmtM(Math.round(gap / left))) +
