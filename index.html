@@ -85,7 +85,49 @@
     padding:10px 2px; border-radius:12px; cursor:pointer; position:relative;
     white-space:nowrap;
   }
-  @media (max-width:400px){ .tab{font-size:14px; padding:10px 0} .tabs{gap:5px} }
+  @media (max-width:400px){ .tab{font-size:13px; padding:10px 0} .tabs{gap:4px} }
+  /* 🎯 搵客（09-13 Franki：每日提我搵邊個·目的係搵錢） */
+  .ld-hero{padding:16px 18px}
+  .ld-prog{display:flex; align-items:baseline; gap:10px; margin-bottom:9px}
+  .ld-big{font-family:-apple-system,BlinkMacSystemFont,sans-serif; font-variant-numeric:tabular-nums;
+    font-size:30px; font-weight:800; line-height:1}
+  .ld-bar{height:9px; border-radius:999px; background:var(--chip); overflow:hidden}
+  .ld-fill{height:100%; border-radius:999px; background:var(--accent)}
+  .ld-pool{display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+    font-size:12px; padding:7px 0; border-bottom:1px dashed var(--line)}
+  .ld-pool:last-child{border-bottom:0}
+  .ld-pool .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .ld-pool .qt{flex:none; font-variant-numeric:tabular-nums; font-weight:700}
+  .ss-card{background:var(--danger-soft); border:1px solid var(--danger);
+    border-radius:14px; padding:14px 16px; margin-top:12px}
+  .ss-t{font-size:14px; font-weight:700; color:var(--danger); margin-bottom:4px}
+  .ss-s{font-size:12.5px; line-height:1.6; color:var(--ink)}
+  .ss-go{display:inline-block; margin-top:9px; font-size:13px; font-weight:700; text-decoration:none;
+    background:var(--danger); color:#FFFDF8; padding:8px 16px; border-radius:999px}
+  .lead{background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; margin-bottom:11px; box-shadow:var(--shadow)}
+  .lead.gone{opacity:.5}
+  .lead-top{display:flex; align-items:baseline; gap:8px; margin-bottom:3px}
+  .lead-n{flex:1; min-width:0; font-size:16px; font-weight:700; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap}
+  .lead-v{flex:none; font-size:12.5px; font-weight:700; color:var(--wbh);
+    font-variant-numeric:tabular-nums}
+  .lead-e{font-size:11.5px; color:var(--muted); word-break:break-all; margin-bottom:7px}
+  .lead-why{font-size:12.5px; color:var(--muted); line-height:1.55; margin-bottom:9px}
+  .lead-say{background:var(--paper); border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    padding:10px 12px; font-size:13px; line-height:1.7; margin-bottom:10px}
+  .lead-acts{display:flex; gap:6px; flex-wrap:wrap}
+  .lead-acts button{flex:1; min-width:62px; font-size:12px; padding:7px 4px; border-radius:9px;
+    border:1px solid var(--line); background:transparent; color:var(--muted);
+    font-family:inherit; font-weight:700; cursor:pointer}
+  .lead-acts button.copy{background:var(--accent); border-color:var(--accent); color:var(--on-accent); flex:1.4}
+  .lead-acts button.won{border-color:var(--accent); color:var(--accent)}
+  .lead-st{font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px;
+    background:var(--chip); display:inline-block}
+  .ld-seg{display:flex; gap:5px; margin-bottom:11px}
+  .ld-seg button{flex:1; font-size:12px; padding:6px 4px; border-radius:999px; border:1px solid var(--line);
+    background:transparent; color:var(--muted); font-family:inherit; cursor:pointer}
+  .ld-seg button.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
   .tab.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
   .tab .badge{
     font-family:'Noto Sans TC',sans-serif; font-size:12px; font-weight:700;
@@ -407,6 +449,7 @@
     <button class="tab" data-view="notes" id="tabNotes">情報</button>
     <button class="tab" data-view="social" id="tabSocial">社群</button>
     <button class="tab" data-view="money" id="tabMoney">資金</button>
+    <button class="tab" data-view="leads" id="tabLeads">搵客</button>
     <button class="tab" data-view="ads" id="tabAds">廣告</button>
   </div>
 
@@ -449,6 +492,31 @@
     <section>
       <h2>傾過嘅嘢 <span class="count">Eva 做完一件實質嘢即刻記</span></h2>
       <div class="card" id="notesList"></div>
+    </section>
+  </div>
+
+  <div class="view" id="viewLeads">
+    <section>
+      <h2>今日搵邊個 <span class="count" id="leadStamp"></span></h2>
+      <div class="card ld-hero">
+        <div class="ld-prog"><span class="ld-big" id="leadProg">—</span>
+          <span style="font-size:13px; color:var(--muted)" id="leadProgTxt"></span></div>
+        <div class="ld-bar"><div class="ld-fill" id="leadFill" style="width:0%"></div></div>
+        <div id="leadPools" style="margin-top:12px"></div>
+      </div>
+      <div class="ss-card">
+        <div class="ss-t">① 先覆 SaleSmartly</div>
+        <div class="ss-s">佢哋主動問緊你，係最熱嘅一批，而且冷咗就冇。呢個後台我讀唔到，所以每日第一件事要你自己開一開。</div>
+        <a class="ss-go" href="https://app.salesmartly.com" target="_blank" rel="noopener">開 SaleSmartly ↗</a>
+      </div>
+      <h2 style="margin-top:20px">② 今日名單</h2>
+      <div class="ld-seg">
+        <button data-ldv="today" id="ldToday">今日</button>
+        <button data-ldv="all" id="ldAll">全部未搵</button>
+        <button data-ldv="done" id="ldDone">已處理</button>
+      </div>
+      <div id="leadList"></div>
+      <div class="ads-warn">排序準則＝熱度 × 每人銀碼 × 死線。開場白一律只問一條問題，唔報價、唔介紹課程、問完收聲——報價前先谷出明確需求（SPIN／Gap Selling／小船 12 步）。</div>
     </section>
   </div>
 
@@ -531,7 +599,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.7</span></div>
 </div>
 
 <div class="capture">
@@ -595,7 +663,8 @@
   var curView = 'sched';
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
-               done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds']};
+               done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds'],
+               leads:['viewLeads','tabLeads']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -610,7 +679,16 @@
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
+  $('tabLeads').addEventListener('click', function(){ setView('leads'); renderLeads(); });
   $('tabAds').addEventListener('click', function(){ setView('ads'); renderAds(); });
+  ['ldToday','ldAll','ldDone'].forEach(function(id){
+    var b = $(id);
+    if(b) b.addEventListener('click', function(){
+      leadView = b.getAttribute('data-ldv');
+      try{ localStorage.setItem('leadView', leadView); }catch(e){}
+      renderLeads();
+    });
+  });
   ['pieMonth','pieW7'].forEach(function(id){
     var b = $(id);
     if(b) b.addEventListener('click', function(){
@@ -781,6 +859,76 @@
                 nw('$' + fmtM(Math.max(0, Math.round((budget - used) / Math.max(1, m.days - m.day))))) + '。'
               : '照呢個速度成個月約 ' + nw('$' + fmtM(proj)) + '，喺預算內。豎線＝今日應該去到嘅位。') +
       '</div>';
+  }
+
+  // ---------- 🎯 搵客（09-13）----------
+  // 排序準則：熱度（幾接近成交）× 每人銀碼 × 死線急切度。pools[].lv 就係熱度級別，細＝熱。
+  var leadView = 'today';
+  try{ leadView = localStorage.getItem('leadView') || 'today'; }catch(e){}
+  if(['today','all','done'].indexOf(leadView) < 0) leadView = 'today';
+  var ST = {doing:'傾咗・等覆', won:'✅ 成交', no:'唔啱', later:'遲啲再搵'};
+  function leadsData(){
+    var L = state.leads || {};
+    if(!Array.isArray(L.queue)) L.queue = [];
+    if(!Array.isArray(L.pools)) L.pools = [];
+    return L;
+  }
+  function poolLv(seg){
+    var ps = leadsData().pools;
+    for(var i=0;i<ps.length;i++) if(ps[i].k === seg) return ps[i].lv || 9;
+    return 9;
+  }
+  function renderLeads(){
+    if(!state || !$('leadList')) return;
+    var L = leadsData(), q = L.queue, today = localDateStr(new Date()), target = L.daily || 5;
+    $('leadStamp').textContent = L.updated ? 'Eva ' + L.updated + ' 整理' : '';
+    // 未搵嘅按「熱度 → 銀碼」排；今日做咗幾多＝今日改過狀態嘅數目
+    var pend = q.filter(function(x){ return !x.st; }).sort(function(a,b){
+      var d = poolLv(a.seg) - poolLv(b.seg); if(d) return d;
+      return (b.val || 0) - (a.val || 0);
+    });
+    var didToday = q.filter(function(x){ return x.st && x.at === today; }).length;
+    $('leadProg').textContent = nw(didToday + ' / ' + target).replace(/<[^>]+>/g,'');
+    $('leadProg').innerHTML = nw(didToday + ' / ' + target);
+    $('leadProgTxt').textContent = didToday >= target ? '今日夠數 ✅ 再搵就係賺'
+      : '今日仲要搵 ' + (target - didToday) + ' 個・池入面仲有 ' + pend.length + ' 個未搵';
+    $('leadFill').style.width = Math.min(100, didToday / target * 100) + '%';
+    // 池概況
+    $('leadPools').innerHTML = L.pools.map(function(pl){
+      var left = pl.n == null ? '—' : q.filter(function(x){ return x.seg === pl.k && !x.st; }).length;
+      return '<div class="ld-pool"><span class="nm">' + esc(pl.name) + '</span>' +
+             '<span class="qt" style="color:var(--muted)">' + (pl.n == null ? '' : nw(String(pl.n)) + ' 人') + '</span>' +
+             '<span class="qt">' + (pl.per ? nw('$' + fmtM(pl.per)) : '') + '</span></div>';
+    }).join('');
+    // 名單
+    var show;
+    if(leadView === 'done') show = q.filter(function(x){ return !!x.st; });
+    else if(leadView === 'all') show = pend;
+    else show = pend.slice(0, target);
+    ['ldToday','ldAll','ldDone'].forEach(function(id){
+      var b = $(id); if(b) b.classList.toggle('on', b.getAttribute('data-ldv') === leadView);
+    });
+    $('leadList').innerHTML = show.length ? show.map(function(x){
+      var done = !!x.st;
+      return '<div class="lead' + (done ? ' gone' : '') + '">' +
+        '<div class="lead-top"><span class="lead-n">' + esc(x.n) + '</span>' +
+        (x.val ? '<span class="lead-v">' + nw('$' + fmtM(x.val)) + '</span>' : '') + '</div>' +
+        '<div class="lead-e">' + esc(x.e || '') + '</div>' +
+        '<div class="lead-why">' + esc(x.why || '') + '</div>' +
+        (done ? '<span class="lead-st">' + esc(ST[x.st] || x.st) + (x.at ? ' · ' + nw(mmdd(x.at)) : '') + '</span>' +
+                '<div class="lead-acts" style="margin-top:9px"><button data-ldact="undo" data-ldid="' + esc(x.id) + '">放返入名單</button></div>'
+              : '<div class="lead-say">' + esc(x.say || '') + '</div>' +
+                '<div class="lead-acts">' +
+                '<button class="copy" data-ldact="copy" data-ldid="' + esc(x.id) + '">複製開場白</button>' +
+                '<button class="won" data-ldact="won" data-ldid="' + esc(x.id) + '">成交</button>' +
+                '<button data-ldact="doing" data-ldid="' + esc(x.id) + '">傾咗</button>' +
+                '<button data-ldact="later" data-ldid="' + esc(x.id) + '">遲啲</button>' +
+                '<button data-ldact="no" data-ldid="' + esc(x.id) + '">唔啱</button></div>') +
+        '</div>';
+    }).join('') : '<div class="card"><div class="empty">' +
+        (leadView === 'done' ? '仲未處理過任何一個' :
+         leadView === 'all' ? '池入面全部搵晒 ✨ 叫 Eva 再由後台攞新一批' :
+         '今日名單清晒 ✅ 撳「全部未搵」繼續') + '</div></div>';
   }
 
   // ---------- 廣告成效 ----------
@@ -1087,6 +1235,7 @@
     renderSched(today);
     if(moneyOpen) renderMoney();
     renderAds();
+    try{ renderLeads(); }catch(e){}
     try{ renderNotes(); }catch(e){}
 
     // 掛返 editor 嘅初始值
@@ -1359,6 +1508,19 @@
     if(!out.ads) out.ads = local.ads || {};
     if(myReq && tsOf(myReq) > tsOf(out.ads.updatedAt)) out.ads.req = myReq;
     if(!out.intel && local.intel) out.intel = local.intel;
+    // leads：名單由 Eva 後台整理（後台為準），但每個人嘅「搵咗未」狀態係兩邊都改得，按 at 日期夾
+    if(local.leads || out.leads){
+      var lo = out.leads || local.leads;
+      if(out.leads && local.leads && Array.isArray(local.leads.queue)){
+        var lmapQ = {};
+        local.leads.queue.forEach(function(x){ lmapQ[x.id] = x; });
+        (lo.queue || []).forEach(function(rq){
+          var lq = lmapQ[rq.id];
+          if(lq && lq.st && (!rq.st || (lq.at || '') >= (rq.at || ''))){ rq.st = lq.st; rq.at = lq.at; }
+        });
+      }
+      out.leads = lo;
+    }
     // income：本機為準
     if(local.income) out.income = local.income;
     // 🔴 v7.6：tombstone 要兩邊聯集。舊版 out.tomb 只留本機嗰份＝冚走對方部機嘅刪除紀錄，
@@ -1507,6 +1669,22 @@
   }
 
   document.addEventListener('click', function(ev){
+    var lb = ev.target.closest('[data-ldact]');
+    if(lb){
+      var act = lb.getAttribute('data-ldact'), lid = lb.getAttribute('data-ldid');
+      var item = leadsData().queue.filter(function(x){ return x.id === lid; })[0];
+      if(!item) return;
+      if(act === 'copy'){
+        try{ navigator.clipboard.writeText(item.say); lb.textContent = '✅ 複製咗'; }
+        catch(e){ lb.textContent = '複製唔到，長按上面段字'; }
+        setTimeout(function(){ renderLeads(); }, 1400);
+        return;
+      }
+      if(act === 'undo'){ item.st = ''; item.at = ''; }
+      else { item.st = act; item.at = localDateStr(new Date()); }
+      renderLeads(); schedulePersist();
+      return;
+    }
     var fb = ev.target.closest('[data-fold]');
     if(fb){
       curFolder = fb.getAttribute('data-fold');
@@ -1655,7 +1833,7 @@
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
   moneyOpen = true;
   if(startView === 'done') startView = 'tasks';
-  setView(['sched','tasks','notes','social','money','ads'].indexOf(startView) >= 0 ? startView : 'sched');
+  setView(['sched','tasks','notes','social','money','ads','leads'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
