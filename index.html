@@ -116,11 +116,13 @@
   .lead-why{font-size:12.5px; color:var(--muted); line-height:1.55; margin-bottom:9px}
   .lead-say{background:var(--paper); border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
     padding:10px 12px; font-size:13px; line-height:1.7; margin-bottom:10px}
-  .lead-acts{display:flex; gap:6px; flex-wrap:wrap}
-  .lead-acts button{flex:1; min-width:62px; font-size:12px; padding:7px 4px; border-radius:9px;
+  .lead-acts{display:flex; gap:5px}
+  .lead-acts button{flex:1; min-width:0; font-size:12px; padding:8px 2px; border-radius:9px;
     border:1px solid var(--line); background:transparent; color:var(--muted);
+    font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap}
+  .lead-copy{width:100%; font-size:13px; padding:10px; border-radius:10px; margin-bottom:7px;
+    background:var(--accent); border:1px solid var(--accent); color:var(--on-accent);
     font-family:inherit; font-weight:700; cursor:pointer}
-  .lead-acts button.copy{background:var(--accent); border-color:var(--accent); color:var(--on-accent); flex:1.4}
   .lead-acts button.won{border-color:var(--accent); color:var(--accent)}
   .lead-st{font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px;
     background:var(--chip); display:inline-block}
@@ -599,7 +601,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.8</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v7.9</span></div>
 </div>
 
 <div class="capture">
@@ -918,8 +920,8 @@
         (done ? '<span class="lead-st">' + esc(ST[x.st] || x.st) + (x.at ? ' · ' + nw(mmdd(x.at)) : '') + '</span>' +
                 '<div class="lead-acts" style="margin-top:9px"><button data-ldact="undo" data-ldid="' + esc(x.id) + '">放返入名單</button></div>'
               : '<div class="lead-say">' + esc(x.say || '') + '</div>' +
+                '<button class="lead-copy" data-ldact="copy" data-ldid="' + esc(x.id) + '">複製開場白</button>' +
                 '<div class="lead-acts">' +
-                '<button class="copy" data-ldact="copy" data-ldid="' + esc(x.id) + '">複製開場白</button>' +
                 '<button class="won" data-ldact="won" data-ldid="' + esc(x.id) + '">成交</button>' +
                 '<button data-ldact="doing" data-ldid="' + esc(x.id) + '">傾咗</button>' +
                 '<button data-ldact="later" data-ldid="' + esc(x.id) + '">遲啲</button>' +
