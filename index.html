@@ -601,7 +601,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.2</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.3</span></div>
 </div>
 
 <div class="capture">
@@ -1945,6 +1945,11 @@
       boot();
     });
   }catch(e){}
+  // 註冊 service worker——Android Chrome 要有佢先裝得成真 app（sw.js 內明文唔快取 HTML）
+  try{
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+  }catch(e){}
+
   boot();
   setInterval(refreshIfChanged, 5000);
   setTimeout(verCheck, 2500);      // 開頁自檢版本一次
