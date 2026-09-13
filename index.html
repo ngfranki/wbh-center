@@ -120,6 +120,10 @@
   .lead-acts button{flex:1; min-width:0; font-size:12px; padding:8px 2px; border-radius:9px;
     border:1px solid var(--line); background:transparent; color:var(--muted);
     font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap}
+  .lead-wa{width:100%; font-size:13px; padding:10px; border-radius:10px; margin-bottom:7px;
+    background:#25D366; border:1px solid #1FAF52; color:#0B2E18; display:block; text-align:center;
+    text-decoration:none; font-family:inherit; font-weight:700}
+  .lead-nowa{font-size:11.5px; color:var(--muted); margin-bottom:7px; line-height:1.5}
   .lead-copy{width:100%; font-size:13px; padding:10px; border-radius:10px; margin-bottom:7px;
     background:var(--accent); border:1px solid var(--accent); color:var(--on-accent);
     font-family:inherit; font-weight:700; cursor:pointer}
@@ -869,6 +873,14 @@
   try{ leadView = localStorage.getItem('leadView') || 'today'; }catch(e){}
   if(['today','all','done'].indexOf(leadView) < 0) leadView = 'today';
   var ST = {doing:'傾咗・等覆', won:'✅ 成交', no:'唔啱', later:'遲啲再搵'};
+  // 電話正規化：剝走符號；香港 8 位數自動加 852。唔合格就當冇電話，唔好亂拼一個錯號碼出嚟。
+  function waLink(tel, msg){
+    if(!tel) return null;
+    var d = String(tel).replace(/[^0-9]/g, '');
+    if(d.length === 8) d = '852' + d;
+    if(d.length < 10 || d.length > 15) return null;
+    return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg || '');
+  }
   function leadsData(){
     var L = state.leads || {};
     if(!Array.isArray(L.queue)) L.queue = [];
@@ -945,6 +957,9 @@
         (done ? '<span class="lead-st">' + esc(ST[x.st] || x.st) + (x.at ? ' · ' + nw(mmdd(x.at)) : '') + '</span>' +
                 '<div class="lead-acts" style="margin-top:9px"><button data-ldact="undo" data-ldid="' + esc(x.id) + '">放返入名單</button></div>'
               : '<div class="lead-say">' + esc(x.say || '') + '</div>' +
+                (waLink(x.tel, x.say)
+                  ? '<a class="lead-wa" href="' + esc(waLink(x.tel, x.say)) + '" target="_blank" rel="noopener">💬 WhatsApp ' + esc(x.tel) + '（開場白已填好）</a>'
+                  : '<div class="lead-nowa">📵 Kajabi 冇佢電話——用 email <b>' + esc(x.e || '') + '</b>，或者去 SaleSmartly 搵佢。</div>') +
                 '<button class="lead-copy" data-ldact="copy" data-ldid="' + esc(x.id) + '">複製開場白</button>' +
                 '<div class="lead-acts">' +
                 '<button class="won" data-ldact="won" data-ldid="' + esc(x.id) + '">成交</button>' +
