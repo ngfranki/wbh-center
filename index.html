@@ -504,7 +504,8 @@
         <div class="ld-prog"><span class="ld-big" id="leadProg">—</span>
           <span style="font-size:13px; color:var(--muted)" id="leadProgTxt"></span></div>
         <div class="ld-bar"><div class="ld-fill" id="leadFill" style="width:0%"></div></div>
-        <div id="leadGoal" style="margin-top:9px; font-size:12px; color:var(--danger); font-weight:700"></div>
+        <div id="leadGoal" style="margin-top:9px; font-size:12.5px; color:var(--danger); font-weight:700"></div>
+        <div id="leadPlan" style="margin-top:8px; font-size:12px; color:var(--muted); line-height:1.6"></div>
         <div id="leadPools" style="margin-top:12px"></div>
       </div>
       <div class="ss-card" id="ssCard"></div>
@@ -600,7 +601,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.0</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.1</span></div>
 </div>
 
 <div class="capture">
@@ -901,8 +902,20 @@
     $('leadProg').innerHTML = nw(didToday + ' / ' + target);
     $('leadProgTxt').textContent = didToday >= target ? '今日夠數 ✅ 再搵就係賺'
       : '今日仲要搵 ' + (target - didToday) + ' 個・池入面仲有 ' + pend.length + ' 個未搵';
+    // 缺口同日均：日數自己計，唔好寫死（寫死會過期）
     var gl = $('leadGoal');
-    if(gl) gl.innerHTML = L.goal ? nw(esc(L.goal)) : '';
+    if(gl){
+      var g = L.gap;
+      if(g && g.target){
+        var left = Math.max(1, Math.round((new Date(g.deadline + 'T23:59:59') - new Date()) / 864e5) + 1);
+        var gap = (g.target || 0) - (g.got || 0);
+        gl.innerHTML = nw('仲差 $' + fmtM(gap)) + '・剩 ' + nw(String(left)) + ' 日・日均要 ' +
+          nw('$' + fmtM(Math.round(gap / left))) +
+          '<div style="font-weight:400; color:var(--muted); margin-top:3px">' + esc(g.note || '') + '</div>';
+      } else gl.innerHTML = L.goal ? nw(esc(L.goal)) : '';
+    }
+    var pn = $('leadPlan');
+    if(pn) pn.textContent = L.plan || '';
     $('leadFill').style.width = Math.min(100, didToday / target * 100) + '%';
     // 池概況
     $('leadPools').innerHTML = L.pools.map(function(pl){
