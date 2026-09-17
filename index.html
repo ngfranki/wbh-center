@@ -568,7 +568,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
-      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（奉獻同儲公司唔郁・其餘按 租→廣告→曉明→Franki 分・剩返落曉明）</button>
+      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（奉獻你入・租→廣告→曉明→Franki 到上限・多出入儲公司）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -605,7 +605,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.7</span></div>
 </div>
 
 <div class="capture">
@@ -712,13 +712,25 @@
     var mv = ev.target.closest('[data-mfield]');
     if(mv && moneyOpen){
       var inc = ensureIncome(), mo = getMonth(inc, moIdx), fld = mv.getAttribute('data-mfield');
-      var cur = mo[fld] == null ? '' : mo[fld];
-      var v = prompt(mv.previousElementSibling.textContent + ' 數字（唔要就留空）', cur);
+      var LBL = {account:'戶口總數', rent:'租金', ad:'廣告', save:'儲公司（你入嘅底數）',
+                 ming:'曉明人工', franki:'Franki 人工', offering:'奉獻'};
+      var AUTO = ['rent','ad','ming','franki'];
+      var cur = (fld === 'save') ? (mo.saveBase != null ? mo.saveBase : mo.save) : mo[fld];
+      cur = cur == null ? '' : cur;
+      var hint = AUTO.indexOf(fld) >= 0 ? '（留空＝返自動計）' : '（唔要就留空）';
+      var v = prompt((LBL[fld] || fld) + ' 數字' + hint, cur);
       if(v === null) return;
       v = String(v).replace(/[^0-9.-]/g,'');
-      mo[fld] = v === '' ? null : Number(v);
-      // 🔴 09-17 Franki「條數要識自動計」：改咗戶口／儲公司／奉獻，其餘即刻自動重分
-      if(fld === 'account' || fld === 'save' || fld === 'offering'){ autoAllocate(true); return; }
+      var num = v === '' ? null : Number(v);
+      if(!mo.manual) mo.manual = {};
+      // 🔴 09-17「條數要識自動計」：任何一格改完，其餘即刻重分，總數永遠等於戶口
+      if(fld === 'save'){ mo.saveBase = num || 0; autoAllocate(true); return; }
+      if(AUTO.indexOf(fld) >= 0){
+        if(num === null) delete mo.manual[fld]; else { mo.manual[fld] = true; mo[fld] = num; }
+        autoAllocate(true); return;
+      }
+      mo[fld] = num;
+      if(fld === 'account' || fld === 'offering'){ autoAllocate(true); return; }
       renderMoney(); schedulePersist();
       return;
     }
@@ -1084,8 +1096,8 @@
     var recv = items.reduce(function(a,b){ return a + (Number(b.amt)||0); }, 0);
 
     var rows = [
-      ['rent','① 租金'], ['ad','② 廣告'], ['save','③ 儲公司（你自己入）'],
-      ['ming','④ 曉明人工'], ['franki','⑤ Franki 人工'],
+      ['rent','① 租金'], ['ad','② 廣告'], ['save','③ 儲公司'],
+      ['ming','④ 曉明人工（上限 '+fmtM(mn.ming)+'）'], ['franki','⑤ Franki 人工（上限 '+fmtM(mn.franki)+'）'],
       ['offering','奉獻（你自己入・最低 6,000）']
     ];
     var used = rows.reduce(function(a,r){ return a + (Number(mo[r[0]])||0); }, 0);
@@ -1100,7 +1112,15 @@
     var body = rows.map(function(r){
       var v = mo[r[0]];
       var disp = (v === null || v === undefined || v === '') ? '—' : '$'+fmtM(v);
-      return '<div class="mrow"><span class="k">'+r[1]+'</span>'+
+      var tag = '';
+      if(r[0] === 'save' && mo.saveBase != null){
+        var extra = (Number(mo.save)||0) - (Number(mo.saveBase)||0);
+        tag = '<div class="stamp" style="margin-top:2px">你入 '+nw('$'+fmtM(mo.saveBase))+
+              (extra > 0 ? '＋多出 '+nw('$'+fmtM(extra)) : '')+'</div>';
+      } else if(mo.manual && mo.manual[r[0]]){
+        tag = '<div class="stamp" style="margin-top:2px">✎ 你手入（留空返自動）</div>';
+      }
+      return '<div class="mrow"><span class="k">'+r[1]+tag+'</span>'+
              '<span class="mval'+(v==null?' empty':'')+'" data-mfield="'+r[0]+'">'+nw(disp)+'</span></div>';
     }).join('');
 
@@ -1137,20 +1157,22 @@
 
 
   function autoAllocate(silent){
+    // 🔴 09-17 Franki 定：奉獻＝手入；儲公司＝手入底數（saveBase）＋分完多出嘅錢；
+    //    租→廣告→曉明（上限 min.ming）→Franki（上限 min.franki）；手入過嘅格照跟手入數，留空＝返自動。
     var inc = ensureIncome(), mo = getMonth(inc, moIdx), mn = inc.min;
-    var pot = Number(mo.account)||0;
-    if(!pot){ if(!silent) alert('先入「戶口總數」'); return; }
-    pot -= (Number(mo.offering)||0);            // 奉獻你自己入，先扣起
-    pot -= (Number(mo.save)||0);                // 🔴 09-17 Franki：儲公司都係自己人手入，唔准自動冚走，先扣起
+    var acct = Number(mo.account)||0;
+    if(!acct){ if(!silent) alert('先入「戶口總數」'); return; }
+    if(mo.saveBase == null) mo.saveBase = Number(mo.save)||0;   // 舊資料：當時個儲公司當係你手入底數
+    if(!mo.manual) mo.manual = {};
+    var pot = acct - (Number(mo.offering)||0) - (Number(mo.saveBase)||0);
     if(pot < 0) pot = 0;
-    var order = [['rent',mn.rent], ['ad',mn.ad],
-                 ['ming',mn.ming], ['franki',mn.franki]];
-    order.forEach(function(o){
-      var give = Math.min(pot, Number(o[1])||0);
-      mo[o[0]] = give > 0 ? give : null;
+    ['rent','ad','ming','franki'].forEach(function(k){
+      if(mo.manual[k]){ pot -= (Number(mo[k])||0); if(pot < 0) pot = 0; return; }
+      var give = Math.min(pot, Number(mn[k])||0);
+      mo[k] = give > 0 ? give : null;
       pot -= give;
     });
-    if(pot > 0) mo.ming = (Number(mo.ming)||0) + pot;   // 🔴 09-17 Franki：分完多出嚟嘅落曉明人工
+    mo.save = (Number(mo.saveBase)||0) + pot;          // 多出嚟嘅入公司儲（用底數＋多出，唔會重算一次加一次）
     renderMoney(); schedulePersist();
   }
 
