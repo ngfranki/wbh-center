@@ -568,7 +568,7 @@
       </div>
 
       <div class="card" id="moneyCard"></div>
-      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（奉獻同儲公司唔郁・其餘按 租→廣告→曉明→Franki 分・剩返落租金）</button>
+      <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（奉獻同儲公司唔郁・其餘按 租→廣告→曉明→Franki 分・剩返落曉明）</button>
 
       <h2 style="margin-top:22px">收款明細 <span class="count" id="incomeTotal"></span></h2>
       <div class="card" id="incomeList"></div>
@@ -605,7 +605,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.6</span></div>
 </div>
 
 <div class="capture">
@@ -717,6 +717,8 @@
       if(v === null) return;
       v = String(v).replace(/[^0-9.-]/g,'');
       mo[fld] = v === '' ? null : Number(v);
+      // 🔴 09-17 Franki「條數要識自動計」：改咗戶口／儲公司／奉獻，其餘即刻自動重分
+      if(fld === 'account' || fld === 'save' || fld === 'offering'){ autoAllocate(true); return; }
       renderMoney(); schedulePersist();
       return;
     }
@@ -1148,7 +1150,7 @@
       mo[o[0]] = give > 0 ? give : null;
       pot -= give;
     });
-    if(pot > 0) mo.rent = (Number(mo.rent)||0) + pot;   // 多出嚟全部落租金
+    if(pot > 0) mo.ming = (Number(mo.ming)||0) + pot;   // 🔴 09-17 Franki：分完多出嚟嘅落曉明人工
     renderMoney(); schedulePersist();
   }
 
