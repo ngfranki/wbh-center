@@ -117,6 +117,13 @@
   .lead-say{background:var(--paper); border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
     padding:10px 12px; font-size:13px; line-height:1.7; margin-bottom:10px}
   .lead-acts{display:flex; gap:5px}
+  .sm-badge{display:inline-block; min-width:16px; padding:0 4px; margin-left:4px; border-radius:9px; background:var(--danger); color:#fff; font-size:10px; line-height:16px; text-align:center; vertical-align:top}
+  .sm-badge:empty{display:none}
+  .sm-ta{width:100%; box-sizing:border-box; min-height:120px; font:inherit; font-size:14px; line-height:1.6; padding:10px; border:1px solid var(--accent); border-radius:10px; background:var(--card); color:var(--ink); resize:vertical}
+  .sm-note{width:100%; box-sizing:border-box; font:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--paper); color:var(--ink); margin-top:6px}
+  .sm-th{font-size:12.5px; color:var(--muted); line-height:1.55; margin:6px 0; white-space:pre-wrap}
+  .sm-th b{color:var(--ink)}
+  .sm-st{font-size:12px; color:var(--accent); font-weight:700; margin:6px 0}
   .lead-acts button{flex:1; min-width:0; font-size:12px; padding:8px 2px; border-radius:9px;
     border:1px solid var(--line); background:transparent; color:var(--muted);
     font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap}
@@ -457,6 +464,7 @@
     <button class="tab" data-view="money" id="tabMoney">資金</button>
     <button class="tab" data-view="leads" id="tabLeads">搵客</button>
     <button class="tab" data-view="ads" id="tabAds">廣告</button>
+    <button class="tab" data-view="sm" id="tabSM">回覆<span class="sm-badge" id="smBadge"></span></button>
   </div>
 
   <div class="view" id="viewSched">
@@ -523,6 +531,20 @@
       <div class="ads-warn">名單同話術出自《26-09-10 九月成交作戰_打電話次序表＋話術》＋09-13 Kajabi 實查。排序＝熱度 × 每人銀碼 × 死線。<br>
       🔴 規矩：唔報價、唔硬銷、一次只問一條封閉式問題、send 完停手等佢覆；一次唔好過 3–4 句，唔准連環 send，唔准問「有冇興趣」。<br>
       🔴 嫌貴唔准減價——用分期（Bundle $1,900 ×12）或拆件降售；「太貴」同「我要諗下」其實係問診唔夠深，返去查問診唔好查價錢。</div>
+    </section>
+  </div>
+
+  <div class="view" id="viewSM">
+    <section>
+      <h2>SaleSmartly 回覆 <span class="count" id="smStamp"></span></h2>
+      <div class="ads-warn" id="smOffline" style="display:none"></div>
+      <div class="ld-seg">
+        <button data-smv="open" id="smOpen">未覆</button>
+        <button data-smv="mine" id="smMine">我自己覆</button>
+        <button data-smv="done" id="smDone">已覆</button>
+      </div>
+      <div id="smList"></div>
+      <div class="ads-warn">流程：有客打字 → 呢度出現 → 撳「叫 Eva 覆」→ Eva 1–2 分鐘內彈草稿（可以直接喺框入面改）→ 撳「可以」Eva 先 send；「叫 Eva 再諗」可以加一句點解唔啱。Eva 經你部 Mac 嘅 Chrome 巡邏，Mac 瞓咗或者 SaleSmartly 登出咗，上面會出「Eva 離線」。</div>
     </section>
   </div>
 
@@ -605,7 +627,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.7</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.8</span></div>
 </div>
 
 <div class="capture">
@@ -670,7 +692,7 @@
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
                done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds'],
-               leads:['viewLeads','tabLeads']};
+               leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -687,12 +709,21 @@
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
   $('tabLeads').addEventListener('click', function(){ setView('leads'); renderLeads(); });
   $('tabAds').addEventListener('click', function(){ setView('ads'); renderAds(); });
+  $('tabSM').addEventListener('click', function(){ setView('sm'); renderSM(); });
   ['ldToday','ldAll','ldDone'].forEach(function(id){
     var b = $(id);
     if(b) b.addEventListener('click', function(){
       leadView = b.getAttribute('data-ldv');
       try{ localStorage.setItem('leadView', leadView); }catch(e){}
       renderLeads();
+    });
+  });
+  ['smOpen','smMine','smDone'].forEach(function(id){
+    var b = $(id);
+    if(b) b.addEventListener('click', function(){
+      smView = b.getAttribute('data-smv');
+      try{ localStorage.setItem('smView', smView); }catch(e){}
+      renderSM();
     });
   });
   ['pieMonth','pieW7'].forEach(function(id){
@@ -988,6 +1019,54 @@
   }
 
   // ---------- 廣告成效 ----------
+  // ---------- SaleSmartly 回覆（sm）----------
+  var smView = 'open';
+  try{ smView = localStorage.getItem('smView') || 'open'; }catch(e){}
+  function smData(){ if(!state.sm) state.sm = {items:[]}; if(!Array.isArray(state.sm.items)) state.sm.items = []; return state.sm; }
+  function smAgo(iso){ var t = tsOf(iso); if(!t) return ''; var m = Math.round((Date.now()-t)/60000); return m < 1 ? '啱啱' : m < 60 ? m+' 分鐘前' : m < 1440 ? Math.round(m/60)+' 小時前' : Math.round(m/1440)+' 日前'; }
+  var SMST = {'':'未覆', self:'我自己覆', ask:'等 Eva 出草稿…', draft:'草稿到咗', rethink:'Eva 再諗緊…', ok:'Eva send 緊…', sent:'已覆'};
+  function renderSM(){
+    if(!state || !$('smList')) return;
+    var S = smData(), items = S.items.slice();
+    var openN = items.filter(function(x){ return !x.st || x.st==='ask' || x.st==='draft' || x.st==='rethink' || x.st==='ok'; }).length;
+    var bd = $('smBadge'); if(bd) bd.textContent = openN ? String(openN) : '';
+    $('smStamp').textContent = S.online ? 'Eva 巡邏 ' + smAgo(S.online) : '';
+    var off = $('smOffline');
+    if(off){
+      var gap = S.online ? (Date.now() - tsOf(S.online)) : 1e12;
+      off.style.display = gap > 10*60000 ? '' : 'none';
+      off.innerHTML = S.online ? '⚠️ Eva 離線（上次巡邏 ' + esc(smAgo(S.online)) + '）——撳掣會記低，但要 Eva 返嚟先做到。Mac 開住＋SaleSmartly 未登出就會自動返。' : '⚠️ Eva 巡邏線未開過。';
+    }
+    ['smOpen','smMine','smDone'].forEach(function(id){ var b = $(id); if(b) b.classList.toggle('on', b.getAttribute('data-smv') === smView); });
+    var show = items.filter(function(x){
+      if(smView === 'mine') return x.st === 'self';
+      if(smView === 'done') return x.st === 'sent';
+      return x.st !== 'self' && x.st !== 'sent';
+    }).sort(function(a,b){ return tsOf(b.lastAt) - tsOf(a.lastAt); });
+    $('smList').innerHTML = show.length ? show.map(function(x){
+      var st = x.st || '';
+      var th = (x.thread || []).map(function(l){ return (l.charAt(0)==='C' ? '<b>客：</b>' : l.charAt(0)==='B' ? '機：' : '曉明：') + esc(l.slice(2)); }).join('<br>');
+      var h = '<div class="lead' + (st==='sent' ? ' gone' : '') + '">' +
+        '<div class="lead-top"><span class="lead-n">' + esc(x.name || '') + '</span><span class="lead-v" style="color:var(--muted); font-weight:400">' + esc(x.ch || '') + ' · ' + esc(smAgo(x.lastAt)) + '</span></div>' +
+        '<div class="sm-th">' + th + '</div>' +
+        '<div class="sm-st">' + esc(SMST[st] || st) + (x.sentAt ? ' · ' + esc(smAgo(x.sentAt)) : '') + '</div>';
+      if(st === '' ){
+        h += '<div class="lead-acts"><button class="won" data-smact="ask" data-smid="' + esc(x.id) + '">叫 Eva 覆</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button></div>';
+      } else if(st === 'draft'){
+        h += '<textarea class="sm-ta" data-smta="' + esc(x.id) + '">' + esc(x.text != null ? x.text : (x.draft || '')) + '</textarea>' +
+             '<input class="sm-note" data-smnote="' + esc(x.id) + '" placeholder="叫 Eva 再諗嘅話，可以講一句點解（唔填都得）" value="' + esc(x.note || '') + '">' +
+             '<div class="lead-acts" style="margin-top:8px"><button class="won" data-smact="ok" data-smid="' + esc(x.id) + '">可以，send</button><button data-smact="rethink" data-smid="' + esc(x.id) + '">叫 Eva 再諗</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button></div>';
+      } else if(st === 'ask' || st === 'rethink' || st === 'ok'){
+        h += '<div class="lead-acts"><button data-smact="self" data-smid="' + esc(x.id) + '">改為我自己覆</button></div>';
+      } else if(st === 'self'){
+        h += '<div class="lead-acts"><button data-smact="ask" data-smid="' + esc(x.id) + '">都係叫 Eva 覆</button><button data-smact="sent" data-smid="' + esc(x.id) + '">我覆咗</button></div>';
+      } else if(st === 'sent'){
+        h += (x.text || x.draft ? '<div class="lead-say">' + esc(x.text || x.draft) + '</div>' : '');
+      }
+      return h + '</div>';
+    }).join('') : '<div class="card"><div class="empty">' + (smView === 'open' ? '冇未覆嘅客 ✅' : smView === 'mine' ? '冇' : '未有已覆紀錄') + '</div></div>';
+  }
+
   function renderAds(){
     if(!state) return;
     var a = state.ads;
@@ -1303,6 +1382,7 @@
     if(moneyOpen) renderMoney();
     renderAds();
     try{ renderLeads(); }catch(e){}
+    try{ renderSM(); }catch(e){}
     try{ renderNotes(); }catch(e){}
 
     // 掛返 editor 嘅初始值
@@ -1591,6 +1671,18 @@
     }
     // income：本機為準
     if(local.income) out.income = local.income;
+    // sm（SaleSmartly 回覆）：名單／草稿／thread 後台為準；st／text／note 邊個 m 新邊個贏
+    if(local.sm || out.sm){
+      var so = out.sm || local.sm;
+      if(out.sm && local.sm && Array.isArray(local.sm.items)){
+        var lms = {}; local.sm.items.forEach(function(x){ lms[x.id] = x; });
+        (so.items || []).forEach(function(rx){
+          var lx = lms[rx.id];
+          if(lx && (lx.m || 0) > (rx.m || 0)){ rx.st = lx.st; rx.text = lx.text; rx.note = lx.note; rx.m = lx.m; if(lx.sentAt && !rx.sentAt){ rx.sentAt = lx.sentAt; rx.by = lx.by; } }
+        });
+      }
+      out.sm = so;
+    }
     // 🔴 v7.6：tombstone 要兩邊聯集。舊版 out.tomb 只留本機嗰份＝冚走對方部機嘅刪除紀錄，
     //    結果曉明喺佢部機刪咗嘅嘢，Franki 部機一寫入就翻生。
     var tombIds = {};
@@ -1737,6 +1829,19 @@
   }
 
   document.addEventListener('click', function(ev){
+    var sb = ev.target.closest('[data-smact]');
+    if(sb){
+      var sact = sb.getAttribute('data-smact'), sid = sb.getAttribute('data-smid');
+      var sit = smData().items.filter(function(x){ return x.id === sid; })[0];
+      if(!sit) return;
+      var ta = document.querySelector('[data-smta="' + sid + '"]'); if(ta) sit.text = ta.value;
+      var nt = document.querySelector('[data-smnote="' + sid + '"]'); if(nt) sit.note = nt.value;
+      if(sact === 'ok' && !(sit.text || '').trim()){ alert('文字框係空嘅，冇嘢 send。'); return; }
+      sit.st = sact; sit.m = Date.now();
+      if(sact === 'sent'){ sit.sentAt = new Date().toISOString(); sit.by = 'me'; }
+      renderSM(); schedulePersist();
+      return;
+    }
     var lb = ev.target.closest('[data-ldact]');
     if(lb){
       var act = lb.getAttribute('data-ldact'), lid = lb.getAttribute('data-ldid');
