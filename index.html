@@ -627,7 +627,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v8.9</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.0</span></div>
 </div>
 
 <div class="capture">
@@ -1024,7 +1024,7 @@
   try{ smView = localStorage.getItem('smView') || 'open'; }catch(e){}
   function smData(){ if(!state.sm) state.sm = {items:[]}; if(!Array.isArray(state.sm.items)) state.sm.items = []; return state.sm; }
   function smAgo(iso){ var t = tsOf(iso); if(!t) return ''; var m = Math.round((Date.now()-t)/60000); return m < 1 ? '啱啱' : m < 60 ? m+' 分鐘前' : m < 1440 ? Math.round(m/60)+' 小時前' : Math.round(m/1440)+' 日前'; }
-  var SMST = {'':'未覆', self:'我自己覆', ask:'等 Eva 出草稿…', draft:'草稿到咗', rethink:'Eva 再諗緊…', ok:'Eva send 緊…', sent:'已覆'};
+  var SMST = {'':'未覆', self:'我自己覆', ask:'等 Eva 出草稿…', draft:'草稿到咗', rethink:'Eva 再諗緊…', ok:'Eva send 緊…', sent:'已覆', skip:'唔使覆'};
   function renderSM(){
     if(!state || !$('smList')) return;
     var S = smData(), items = S.items.slice();
@@ -1049,38 +1049,39 @@
         p.thread = [];
         g.slice().reverse().forEach(function(x){ (x.thread || []).forEach(function(l){ p.thread.push(l.charAt(0) + ' 〔' + x.ch + '〕' + l.slice(2)); }); });
         // 狀態用最「前進」嗰條（有草稿／已覆優先）
-        var rank = {'':0, self:1, ask:2, rethink:2, draft:3, ok:4, sent:5};
+        var rank = {'':0, self:1, ask:2, rethink:2, draft:3, ok:4, sent:5, skip:5};
         g.forEach(function(x){ if((rank[x.st] || 0) > (rank[p.st] || 0)){ p.st = x.st; p.draft = x.draft; p.text = x.text; p.note = x.note; p.sentAt = x.sentAt; } });
       }
       return p;
     });
     var show = items.filter(function(x){
       if(smView === 'mine') return x.st === 'self';
-      if(smView === 'done') return x.st === 'sent';
-      return x.st !== 'self' && x.st !== 'sent';
+      if(smView === 'done') return x.st === 'sent' || x.st === 'skip';
+      return x.st !== 'self' && x.st !== 'sent' && x.st !== 'skip';
     }).sort(function(a,b){ return tsOf(b.lastAt) - tsOf(a.lastAt); });
     $('smList').innerHTML = show.length ? show.map(function(x){
       var st = x.st || '';
       var th = (x.thread || []).map(function(l){ return (l.charAt(0)==='C' ? '<b>客：</b>' : l.charAt(0)==='B' ? '機：' : '曉明：') + esc(l.slice(2)); }).join('<br>');
-      var h = '<div class="lead' + (st==='sent' ? ' gone' : '') + '">' +
+      var h = '<div class="lead' + (st==='sent' || st==='skip' ? ' gone' : '') + '">' +
         '<div class="lead-top"><span class="lead-n">' + esc(x.name || '') + '</span><span class="lead-v" style="color:var(--muted); font-weight:400">' + esc(x.ch || '') + ' · ' + esc(smAgo(x.lastAt)) + '</span></div>' +
         '<div class="sm-th">' + th + '</div>' +
         '<div class="sm-st">' + esc(SMST[st] || st) + (x.sentAt ? ' · ' + esc(smAgo(x.sentAt)) : '') + '</div>';
       if(st === '' ){
-        h += '<div class="lead-acts"><button class="won" data-smact="ask" data-smid="' + esc(x.id) + '">叫 Eva 覆</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button></div>';
+        h += '<div class="lead-acts"><button class="won" data-smact="ask" data-smid="' + esc(x.id) + '">叫 Eva 覆</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button><button data-smact="skip" data-smid="' + esc(x.id) + '">唔使覆</button></div>';
       } else if(st === 'draft'){
         h += '<textarea class="sm-ta" data-smta="' + esc(x.id) + '">' + esc(x.text != null ? x.text : (x.draft || '')) + '</textarea>' +
              '<input class="sm-note" data-smnote="' + esc(x.id) + '" placeholder="叫 Eva 再諗嘅話，可以講一句點解（唔填都得）" value="' + esc(x.note || '') + '">' +
-             '<div class="lead-acts" style="margin-top:8px"><button class="won" data-smact="ok" data-smid="' + esc(x.id) + '">可以，send</button><button data-smact="rethink" data-smid="' + esc(x.id) + '">叫 Eva 再諗</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button></div>';
+             '<div class="lead-acts" style="margin-top:8px"><button class="won" data-smact="ok" data-smid="' + esc(x.id) + '">可以，send</button><button data-smact="rethink" data-smid="' + esc(x.id) + '">叫 Eva 再諗</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button><button data-smact="skip" data-smid="' + esc(x.id) + '">唔使覆</button></div>';
       } else if(st === 'ask' || st === 'rethink' || st === 'ok'){
         h += '<div class="lead-acts"><button data-smact="self" data-smid="' + esc(x.id) + '">改為我自己覆</button></div>';
       } else if(st === 'self'){
-        h += '<div class="lead-acts"><button data-smact="ask" data-smid="' + esc(x.id) + '">都係叫 Eva 覆</button><button data-smact="sent" data-smid="' + esc(x.id) + '">我覆咗</button></div>';
-      } else if(st === 'sent'){
-        h += (x.text || x.draft ? '<div class="lead-say">' + esc(x.text || x.draft) + '</div>' : '');
+        h += '<div class="lead-acts"><button data-smact="ask" data-smid="' + esc(x.id) + '">都係叫 Eva 覆</button><button data-smact="sent" data-smid="' + esc(x.id) + '">我覆咗</button><button data-smact="skip" data-smid="' + esc(x.id) + '">唔使覆</button></div>';
+      } else if(st === 'sent' || st === 'skip'){
+        h += (st === 'sent' && (x.text || x.draft) ? '<div class="lead-say">' + esc(x.text || x.draft) + '</div>' : '') +
+             (st === 'skip' ? '<div class="lead-acts" style="margin-top:9px"><button data-smact="reopen" data-smid="' + esc(x.id) + '">放返出嚟</button></div>' : '');
       }
       return h + '</div>';
-    }).join('') : '<div class="card"><div class="empty">' + (smView === 'open' ? '冇未覆嘅客 ✅' : smView === 'mine' ? '冇' : '未有已覆紀錄') + '</div></div>';
+    }).join('') : '<div class="card"><div class="empty">' + (smView === 'open' ? '冇未覆嘅客 ✅' : smView === 'mine' ? '冇' : '未有已覆／唔使覆紀錄') + '</div></div>';
   }
 
   function renderAds(){
@@ -1856,7 +1857,7 @@
       var nt = document.querySelector('[data-smnote="' + sid + '"]'); if(nt) sit.note = nt.value;
       if(sact === 'ok' && !(sit.text || '').trim()){ alert('文字框係空嘅，冇嘢 send。'); return; }
       group.forEach(function(g){
-        g.st = sact; g.m = Date.now(); g.text = sit.text; g.note = sit.note;
+        g.st = (sact === 'reopen') ? '' : sact; g.m = Date.now(); g.text = sit.text; g.note = sit.note;
         if(sact === 'sent'){ g.sentAt = new Date().toISOString(); g.by = 'me'; }
         if(sact === 'ok' && g.id !== sid){ g.st = 'sent'; g.sentAt = new Date().toISOString(); g.by = 'eva'; }   // 只喺最新渠道 send 一次
       });
