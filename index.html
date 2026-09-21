@@ -628,7 +628,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.4</span></div>
 </div>
 
 <div class="capture">
@@ -1099,7 +1099,7 @@
       var h = '<div class="lead' + (st==='sent' || st==='skip' ? ' gone' : '') + '">' +
         '<div class="lead-top"><span class="lead-n">' + esc(x.name || '') + '</span><span class="lead-v" style="color:var(--muted); font-weight:400">' + esc(x.ch || '') + ' · ' + esc(smAgo(x.lastAt)) + '</span></div>' +
         '<div class="sm-th">' + th + '</div>' +
-        '<div class="sm-st">' + esc(SMST[st] || st) + (x.sentAt ? ' · ' + esc(smAgo(x.sentAt)) : '') + '</div>' + smStuck(x, st);
+        '<div class="sm-st">' + esc(SMST[st] || st) + (st === 'sent' && x.sentAt ? ' · ' + esc(smAgo(x.sentAt)) : '') + '</div>' + smStuck(x, st);
       if(st === '' ){
         h += '<div class="lead-acts"><button class="won" data-smact="ask" data-smid="' + esc(x.id) + '">叫 Eva 覆</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button><button data-smact="skip" data-smid="' + esc(x.id) + '">唔使覆</button></div>';
       } else if(st === 'draft'){
