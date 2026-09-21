@@ -628,7 +628,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.2</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.3</span></div>
 </div>
 
 <div class="capture">
@@ -1042,12 +1042,27 @@
     var S = smData(), items = S.items.slice();
     var openN = items.filter(function(x){ return !x.st || x.st==='ask' || x.st==='draft' || x.st==='rethink' || x.st==='ok'; }).length;
     var bd = $('smBadge'); if(bd) bd.textContent = openN ? String(openN) : '';
-    $('smStamp').textContent = S.online ? 'Eva 巡邏 ' + smAgo(S.online) : '';
+    var stamps = [];
+    if(S.online)     stamps.push('WhatsApp ' + smAgo(S.online));
+    if(S.onlineMeta) stamps.push('FB/IG ' + smAgo(S.onlineMeta));
+    $('smStamp').textContent = stamps.join(' · ');
     var off = $('smOffline');
     if(off){
-      var gap = S.online ? (Date.now() - tsOf(S.online)) : 1e12;
-      off.style.display = gap > 10*60000 ? '' : 'none';
-      off.innerHTML = S.online ? '⚠️ Eva 離線（上次巡邏 ' + esc(smAgo(S.online)) + '）——撳掣會記低，但要 Eva 返嚟先做到。Mac 開住＋SaleSmartly 未登出就會自動返。' : '⚠️ Eva 巡邏線未開過。';
+      // 09-21：兩條收件線（SaleSmartly 做 WhatsApp／Meta API 做 FB＋IG），邊條死都要講明係邊條。
+      var LINES = [
+        { on: S.online,     nm: 'SaleSmartly 線（WhatsApp）' },
+        { on: S.onlineMeta, nm: 'Meta 線（Facebook＋Instagram）' }
+      ].filter(function(l){ return l.on; });       // 未開過嘅線唔報警
+      var dead = LINES.filter(function(l){ return Date.now() - tsOf(l.on) > 10*60000; });
+      if(!LINES.length){
+        off.style.display = ''; off.innerHTML = '⚠️ 兩條收件線都未開過。';
+      } else if(dead.length){
+        off.style.display = '';
+        off.innerHTML = '⚠️ ' + dead.map(function(l){ return esc(l.nm) + '斷咗（上次 ' + esc(smAgo(l.on)) + '）'; }).join('；') +
+          '。呢條線嘅新訊息暫時入唔到嚟。Mac 開住就會自動返。';
+      } else {
+        off.style.display = 'none';
+      }
       // 09-21：送信機自己報身體狀況。logged_out ＝ 要你入一次密碼，唔係 Eva 偷懶。
       if(S.senderErr){
         off.style.display = '';
