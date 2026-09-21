@@ -628,7 +628,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.2</span></div>
 </div>
 
 <div class="capture">
@@ -1048,6 +1048,13 @@
       var gap = S.online ? (Date.now() - tsOf(S.online)) : 1e12;
       off.style.display = gap > 10*60000 ? '' : 'none';
       off.innerHTML = S.online ? '⚠️ Eva 離線（上次巡邏 ' + esc(smAgo(S.online)) + '）——撳掣會記低，但要 Eva 返嚟先做到。Mac 開住＋SaleSmartly 未登出就會自動返。' : '⚠️ Eva 巡邏線未開過。';
+      // 09-21：送信機自己報身體狀況。logged_out ＝ 要你入一次密碼，唔係 Eva 偷懶。
+      if(S.senderErr){
+        off.style.display = '';
+        off.innerHTML = S.senderErr === 'logged_out'
+          ? '🔴 送信機登出咗 SaleSmartly，撳「可以」送唔出。喺 Mac 開 Terminal 貼一次：node ~/eva-dayboard/sm_send.js --login，登入完就自動恢復。'
+          : '🔴 送信機出事（' + esc(S.senderErr) + '）——撳「可以」暫時送唔出，卡住嘅會喺下面出紅字。';
+      }
     }
     ['smOpen','smMine','smDone'].forEach(function(id){ var b = $(id); if(b) b.classList.toggle('on', b.getAttribute('data-smv') === smView); });
     // 同一個人喺兩個渠道（FB＋WhatsApp）＝合做一張卡；掣落喺最新嗰條，其餘同步狀態
