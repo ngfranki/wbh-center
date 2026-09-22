@@ -124,6 +124,7 @@
   .sm-th{font-size:12.5px; color:var(--muted); line-height:1.55; margin:6px 0; white-space:pre-wrap}
   .sm-th b{color:var(--ink)}
   .sm-st{font-size:12px; color:var(--accent); font-weight:700; margin:6px 0}
+  .sm-fu{font-size:12px; color:#7a5c00; background:#fff4d1; font-weight:700; margin:6px 0 2px; padding:6px 9px; border-radius:7px}
   .sm-stuck{font-size:12px; color:#fff; background:#c0392b; font-weight:700; line-height:1.45; margin:6px 0 2px; padding:7px 9px; border-radius:7px}
   .lead-acts button{flex:1; min-width:0; font-size:12px; padding:8px 2px; border-radius:9px;
     border:1px solid var(--line); background:transparent; color:var(--muted);
@@ -628,7 +629,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.7</span></div>
 </div>
 
 <div class="capture">
@@ -1102,6 +1103,7 @@
       var h = '<div class="lead' + (st==='sent' || st==='skip' ? ' gone' : '') + '">' +
         '<div class="lead-top"><span class="lead-n">' + esc(x.name || '') + '</span><span class="lead-v" style="color:var(--muted); font-weight:400">' + esc(x.ch || '') + ' · ' + esc(smAgo(x.lastAt)) + '</span></div>' +
         '<div class="sm-th">' + th + '</div>' +
+        (x.fuTag ? '<div class="sm-fu">🔔 ' + (x.fuTag === 'D2' ? '第 2 日跟進' : '第 6 日跟進（最後一次）') + '——佢一直冇再出聲</div>' : '') +
         '<div class="sm-st">' + esc(SMST[st] || st) + (st === 'sent' && x.sentAt ? ' · ' + esc(smAgo(x.sentAt)) : '') + '</div>' + smStuck(x, st);
       if(st === '' ){
         h += '<div class="lead-acts"><button class="won" data-smact="ask" data-smid="' + esc(x.id) + '">叫 Eva 覆</button><button data-smact="self" data-smid="' + esc(x.id) + '">我自己覆</button><button data-smact="skip" data-smid="' + esc(x.id) + '">唔使覆</button></div>';
