@@ -641,7 +641,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v9.9</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.0</span></div>
 </div>
 
 <div class="capture">
@@ -1934,12 +1934,46 @@
       });
   }
 
+  // 2026-09-27：慳流量。以前每 5 秒攞成份 195 KB 返嚟先比較，一個分頁開住一日半
+  // 就用爆 Supabase 一個月嘅 5 GB。而家先問「最後更新時間」（幾十 bytes），
+  // 真係變咗先攞全份。你睇到嘅嘢一樣係最新，只係唔再重複攞同一份嘢。
+  function fetchStamp(cb){
+    var done = false, ctrl = null;
+    try{ ctrl = new AbortController(); }catch(e){}
+    var timer = setTimeout(function(){
+      if(done) return; done = true;
+      try{ ctrl && ctrl.abort(); }catch(e){}
+      cb(null);
+    }, 12000);
+    fetch(SB+'/rest/v1/wbh_board?id=eq.main&select=updated_at', {
+      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY},
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(rows){
+        if(done) return; done = true; clearTimeout(timer);
+        cb(rows && rows[0] ? rows[0].updated_at : null);
+      })
+      .catch(function(){
+        if(done) return; done = true; clearTimeout(timer);
+        cb(null);
+      });
+  }
+
   function refreshIfChanged(){
     if(dirty || editing || armedDel || !state) return;
-    fetchBoard(function(row){
-      if(row && row.updated_at !== lastUpdated){ applyState(row); cacheSave(row); render(); }
+    fetchStamp(function(stamp){
+      if(!stamp || stamp === lastUpdated) return;      // 冇變＝唔使攞，慳晒
+      fetchBoard(function(row){
+        if(row && row.updated_at !== lastUpdated){ applyState(row); cacheSave(row); render(); }
+      });
     });
   }
+
+  // 你一返嚟望個板，即刻攞最新嗰份，唔使等下一個循環。
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible') refreshIfChanged();
+  });
+  window.addEventListener('focus', function(){ refreshIfChanged(); });
 
   // ---------- actions ----------
   function findTask(id){
