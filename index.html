@@ -370,6 +370,38 @@
   .wb-delta{font-size:10.5px; color:var(--muted); margin-top:2px}
   .wb-note{font-size:12px; color:var(--muted); line-height:1.5; margin-top:9px;
     background:var(--paper); border-left:3px solid var(--line); border-radius:0 8px 8px 0; padding:6px 10px}
+  /* 🕐 垂直時間線（09-29 Franki 要：一眼睇到而家去到邊、邊日應該有咩出現） */
+  .tl-card{padding:14px 14px 4px}
+  .tl-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px}
+  .tl-title{font-size:13px; font-weight:700}
+  .tl-prog{font-size:11.5px; color:var(--muted)}
+  .tl-i{display:flex; gap:9px; position:relative}
+  .tl-d{flex:none; width:50px; text-align:right; font-size:11px; color:var(--muted);
+    padding-top:1px; font-variant-numeric:tabular-nums; line-height:1.45}
+  .tl-d b{display:block; font-size:12px; color:var(--ink); font-weight:700}
+  .tl-r{flex:none; width:14px; position:relative}
+  .tl-r::before{content:''; position:absolute; left:6px; top:0; bottom:0; width:2px; background:var(--line)}
+  .tl-i:first-child .tl-r::before{top:7px}
+  .tl-i:last-child .tl-r::before{bottom:auto; height:7px}
+  .tl-dot{position:absolute; left:1px; top:2px; width:12px; height:12px; border-radius:50%;
+    background:var(--card); border:2px solid var(--line); box-sizing:border-box}
+  .tl-i.done .tl-dot{background:var(--accent); border-color:var(--accent)}
+  .tl-i.miss .tl-dot{background:var(--danger-soft); border-color:var(--danger)}
+  .tl-i.now .tl-dot{left:-1px; top:0; width:16px; height:16px; border-color:var(--wbh); border-width:3px}
+  .tl-i.big .tl-dot{left:-1px; top:0; width:16px; height:16px; border-width:3px}
+  .tl-b{flex:1; min-width:0; padding-bottom:14px; cursor:pointer}
+  .tl-t{font-size:13px; line-height:1.45}
+  .tl-i.done .tl-t{color:var(--done); text-decoration:line-through}
+  .tl-i.big .tl-t{font-size:14.5px; font-weight:700}
+  .tl-m{font-size:11px; color:var(--muted); margin-top:2px}
+  .tl-tag{display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px;
+    background:var(--chip); color:var(--muted); margin-right:5px; vertical-align:1px}
+  .tl-tag.live{background:var(--accent); color:var(--on-accent)}
+  .tl-tag.dl{background:var(--danger-soft); color:var(--danger)}
+  .tl-tag.ad{background:var(--wbh-soft); color:var(--wbh)}
+  .tl-sep{font-size:11px; color:var(--danger); font-weight:700; margin-left:5px}
+  .tl-more{width:100%; font-size:12px; padding:9px; border-radius:10px; margin:2px 0 12px;
+    border:1px dashed var(--line); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit}
   .ads-miss{font-size:12px; color:var(--danger); background:var(--danger-soft);
     border-radius:8px; padding:6px 10px; margin:8px 0 2px; line-height:1.5}
   /* 📊 錢分佈（09-11 Franki 要：一目了然睇到啲錢落咗去邊） */
@@ -619,6 +651,7 @@
     <section>
       <h2>講座場次 <span class="count" id="wbStamp"></span></h2>
       <div id="wbLive"></div>
+      <div id="wbTl" style="margin-top:12px"></div>
       <div id="wbList" style="margin-top:12px"></div>
       <div class="ads-warn">⚠️ 報名數＝Kajabi 表格實收（唔係 Meta 自報）。出席同成交要你自己入，撳個數就改到。</div>
     </section>
@@ -676,7 +709,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.2</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.3</span></div>
 </div>
 
 <div class="capture">
@@ -1283,6 +1316,8 @@
         '</div>';
     }
 
+    renderTl(next, today);
+
     // ── 逐場卡（三場並排對比）
     if(!rows.length){ $('wbList').innerHTML = '<div class="card"><div class="empty">未有場次</div></div>'; return; }
     var best = null;
@@ -1322,6 +1357,76 @@
         '</div>';
     }).join('');
   }
+
+  // ── 垂直時間線：email／廣告／講座／死線，逐粒撳一下剔
+  var tlOpen = false;
+  var TLTAG = {email:['信',''], ad:['廣告','ad'], live:['講座','live'], deadline:['死線','dl'], rest:['休','']};
+  function renderTl(w, today){
+    var box = $('wbTl');
+    if(!w || !Array.isArray(w.tl) || !w.tl.length){ box.innerHTML = ''; return; }
+    var tl = w.tl.slice().sort(function(a,b){
+      return (a.d+(a.tm||'00:00')) < (b.d+(b.tm||'00:00')) ? -1 : 1;
+    });
+    var done = 0, miss = 0;
+    tl.forEach(function(x){
+      if(x.st === 'done') done++;
+      else if(x.d < today) miss++;
+    });
+    // 預設由「三日前」睇起，之前嘅摺埋
+    var cut = localDateStr(new Date(Date.now() - 3*864e5));
+    var hidden = tlOpen ? 0 : tl.filter(function(x){ return x.d < cut; }).length;
+    var show = tlOpen ? tl : tl.slice(hidden);
+
+    var rows = show.map(function(x, i){
+      var real = tl.indexOf(x);
+      var cls = x.st === 'done' ? ' done' : (x.d < today ? ' miss' : (x.d === today ? ' now' : ''));
+      if(x.k === 'live' || x.k === 'deadline') cls += ' big';
+      var tag = TLTAG[x.k] || ['', ''];
+      var prevD = i > 0 ? show[i-1].d : null;
+      var dt = new Date(x.d+'T12:00:00');
+      var dhead = x.d === prevD ? '' :
+        '<b>' + nw(mmdd(x.d)) + '</b>' + WEEK[dt.getDay()] +
+        (x.d === today ? '<br><span style="color:var(--wbh);font-weight:700">今日</span>' : '');
+      var meta = [];
+      if(x.tm) meta.push(x.tm);
+      if(x.who && x.who !== '—') meta.push(x.who);
+      if(x.st === 'done') meta.push('✓ 已確認');
+      else if(x.d < today) meta.push('應該出咗——撳一下確認');
+      return '<div class="tl-i' + cls + '">' +
+        '<div class="tl-d">' + dhead + '</div>' +
+        '<div class="tl-r"><span class="tl-dot"></span></div>' +
+        '<div class="tl-b" data-tl="' + real + '">' +
+          '<div class="tl-t">' + (tag[0] ? '<span class="tl-tag ' + tag[1] + '">' + tag[0] + '</span>' : '') +
+            esc(x.t) + '</div>' +
+          (meta.length ? '<div class="tl-m">' + esc(meta.join('・')) + '</div>' : '') +
+        '</div></div>';
+    }).join('');
+
+    box.innerHTML = '<div class="card tl-card">' +
+      '<div class="tl-head"><span class="tl-title">' + esc(w.n) + ' 節奏表</span>' +
+      '<span class="tl-prog">' + nw(String(tl.length)) + ' 個節點・做咗 ' + nw(String(done)) +
+      (miss ? '<span class="tl-sep">・' + nw(String(miss)) + ' 個未確認</span>' : '') + '</span></div>' +
+      (hidden ? '<button class="tl-more" data-tlmore="1">▲ 睇返之前 ' + nw(String(hidden)) + ' 個</button>' : '') +
+      rows + '</div>';
+  }
+
+  document.addEventListener('click', function(e){
+    var mo = e.target.closest ? e.target.closest('[data-tlmore]') : null;
+    if(mo){ tlOpen = true; renderWb(); return; }
+    var n = e.target.closest ? e.target.closest('[data-tl]') : null;
+    if(!n) return;
+    var rows = wbRows(), today = localDateStr(new Date()), w = null;
+    rows.forEach(function(r){ if(!w && r.d >= today) w = r; });
+    if(!w || !w.tl) return;
+    var tl = w.tl.slice().sort(function(a,b){
+      return (a.d+(a.tm||'00:00')) < (b.d+(b.tm||'00:00')) ? -1 : 1;
+    });
+    var item = tl[Number(n.getAttribute('data-tl'))];
+    if(!item) return;
+    item.st = item.st === 'done' ? null : 'done';
+    w.m = Date.now();
+    schedulePersist(); renderWb();
+  });
 
   // 撳格入數（出席／成交／收入）
   document.addEventListener('click', function(e){
@@ -1954,6 +2059,14 @@
           var lw = lmw[rw.id];
           if(lw && (lw.m || 0) > (rw.m || 0)){
             ['attend','close','rev','note'].forEach(function(k){ rw[k] = lw[k]; });
+            // 節奏表：後台可以加節點，但「剔咗未」係手入——用本機嗰批 st 覆返落去
+            if(Array.isArray(rw.tl) && Array.isArray(lw.tl)){
+              var lst = {}; lw.tl.forEach(function(x){ lst[x.d+'|'+(x.tm||'')+'|'+x.t] = x.st; });
+              rw.tl.forEach(function(x){
+                var key = x.d+'|'+(x.tm||'')+'|'+x.t;
+                if(key in lst) x.st = lst[key];
+              });
+            } else if(Array.isArray(lw.tl) && !rw.tl){ rw.tl = lw.tl; }
             rw.m = lw.m;
           }
         });
