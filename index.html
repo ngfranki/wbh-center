@@ -345,6 +345,26 @@
     background:var(--card); color:var(--ink); font-family:inherit; cursor:pointer}
   .fold-pick button.on{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:700}
   .ads-sum{font-size:13px; color:var(--muted); margin-top:6px}
+  /* 🎤 場次（09-29 Franki 要：三場並排，一眼睇到報名成本條線） */
+  .wb{padding:14px 16px; margin-bottom:10px}
+  .wb-top{display:flex; align-items:baseline; gap:8px; margin-bottom:2px}
+  .wb-n{font-size:15px; font-weight:700; flex:none}
+  .wb-d{font-size:12px; color:var(--muted); flex:none}
+  .wb-next{flex:none; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px;
+    background:var(--accent-soft); color:var(--accent)}
+  .wb-t{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px}
+  .wb-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line);
+    border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .wb-cell{background:var(--card); padding:8px 6px; text-align:center}
+  .wb-cell.tap{cursor:pointer}
+  .wb-k{font-size:10.5px; color:var(--muted); letter-spacing:.06em; margin-bottom:3px}
+  .wb-v{font-size:16px; font-weight:700; font-variant-numeric:tabular-nums}
+  .wb-v.na{font-size:13px; font-weight:400; color:var(--done)}
+  .wb-v.up{color:var(--danger)}
+  .wb-v.dn{color:var(--accent)}
+  .wb-delta{font-size:10.5px; color:var(--muted); margin-top:2px}
+  .wb-note{font-size:12px; color:var(--muted); line-height:1.5; margin-top:9px;
+    background:var(--paper); border-left:3px solid var(--line); border-radius:0 8px 8px 0; padding:6px 10px}
   .ads-miss{font-size:12px; color:var(--danger); background:var(--danger-soft);
     border-radius:8px; padding:6px 10px; margin:8px 0 2px; line-height:1.5}
   /* 📊 錢分佈（09-11 Franki 要：一目了然睇到啲錢落咗去邊） */
@@ -474,6 +494,7 @@
     <button class="tab" data-view="money" id="tabMoney">資金</button>
     <button class="tab" data-view="leads" id="tabLeads">搵客</button>
     <button class="tab" data-view="ads" id="tabAds">廣告</button>
+    <button class="tab" data-view="wb" id="tabWb">場次</button>
     <button class="tab" data-view="sm" id="tabSM">回覆<span class="sm-badge" id="smBadge"></span></button>
   </div>
 
@@ -589,6 +610,15 @@
     </section>
   </div>
 
+  <div class="view" id="viewWb">
+    <section>
+      <h2>講座場次 <span class="count" id="wbStamp"></span></h2>
+      <div id="wbLive"></div>
+      <div id="wbList" style="margin-top:12px"></div>
+      <div class="ads-warn">⚠️ 報名數＝Kajabi 表格實收（唔係 Meta 自報）。出席同成交要你自己入，撳個數就改到。</div>
+    </section>
+  </div>
+
   <div class="view" id="viewMoney">
     <section id="moneyBody">
       <div class="card min-card">
@@ -641,7 +671,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.0</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.1</span></div>
 </div>
 
 <div class="capture">
@@ -706,7 +736,7 @@
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
                done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds'],
-               leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM']};
+               leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM'], wb:['viewWb','tabWb']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -723,6 +753,7 @@
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
   $('tabLeads').addEventListener('click', function(){ setView('leads'); renderLeads(); });
   $('tabAds').addEventListener('click', function(){ setView('ads'); renderAds(); });
+  $('tabWb').addEventListener('click', function(){ setView('wb'); renderWb(); });
   $('tabSM').addEventListener('click', function(){ setView('sm'); renderSM(); });
   (function(){
     var ob = document.getElementById('smOffer');
@@ -1190,6 +1221,115 @@
     }).join('') : '<div class="card"><div class="empty">' + (smView === 'open' ? '冇未覆嘅客 ✅' : smView === 'mine' ? '冇' : '未有已覆／唔使覆紀錄') + '</div></div>';
   }
 
+  // ---------- 🎤 場次（講座一場場對比） ----------
+  function wbData(){
+    if(!state.wb || !Array.isArray(state.wb.rows)) state.wb = {rows:[]};
+    return state.wb;
+  }
+  function wbRows(){
+    return wbData().rows.slice().sort(function(a,b){ return a.d < b.d ? -1 : 1; });
+  }
+  function wbCPL(r){
+    var reg = Number(r.reg)||0, sp = Number(r.spend)||0;
+    return (reg > 0 && sp > 0) ? sp / reg : null;
+  }
+  function wbMoney(n){ return 'HK$' + Math.round(n).toLocaleString('en-US'); }
+  function wbDays(d){
+    return Math.ceil((new Date(d+'T12:00:00') - new Date(localDateStr(new Date())+'T12:00:00')) / 864e5);
+  }
+
+  function renderWb(){
+    var rows = wbRows(), today = localDateStr(new Date());
+    $('wbStamp').textContent = rows.length ? rows.length + ' 場' : '';
+
+    // ── 頂卡：下一場嘅活數字
+    var next = null, prev = null;
+    rows.forEach(function(r){
+      if(r.d >= today){ if(!next) next = r; } else { prev = r; }
+    });
+    if(!next){
+      $('wbLive').innerHTML = '<div class="card"><div class="empty">冇排緊下一場</div></div>';
+    } else {
+      var dLeft = wbDays(next.d), cpl = wbCPL(next), pcpl = prev ? wbCPL(prev) : null;
+      var reg = next.reg == null ? null : Number(next.reg);
+      var sub = [];
+      sub.push(dLeft > 0 ? '仲有 ' + nw(String(dLeft)) + ' 日' : dLeft === 0 ? '就係今日' : '已經過咗');
+      if(Number(next.spend) > 0) sub.push('已用 ' + nw(wbMoney(next.spend)));
+      if(cpl != null){
+        var cmp = '';
+        if(pcpl != null){
+          var pct = Math.round((cpl - pcpl) / pcpl * 100);
+          cmp = pct > 0 ? '（貴過上場 ' + nw(String(pct)) + '%）'
+              : pct < 0 ? '（平過上場 ' + nw(String(-pct)) + '%）' : '（同上場一樣）';
+        }
+        sub.push('每個報名 ' + nw(wbMoney(cpl)) + cmp);
+      }
+      $('wbLive').innerHTML =
+        '<div class="card min-card" style="padding:16px 20px">' +
+        '<div class="min-label">' + esc(next.n) + '・' + nw(mmdd(next.d)) + ' 報名人數</div>' +
+        '<div class="min-total">' + (reg == null ? '—' : nw(String(reg))) + '</div>' +
+        '<div class="ads-sum">' + sub.join('・') + '</div>' +
+        (next.note ? '<div class="wb-note" style="text-align:left">' + esc(next.note) + '</div>' : '') +
+        '</div>';
+    }
+
+    // ── 逐場卡（三場並排對比）
+    if(!rows.length){ $('wbList').innerHTML = '<div class="card"><div class="empty">未有場次</div></div>'; return; }
+    var best = null;
+    rows.forEach(function(r){ var c = wbCPL(r); if(c != null && (best == null || c < best)) best = c; });
+
+    $('wbList').innerHTML = rows.map(function(r, i){
+      var cpl = wbCPL(r), pr = i > 0 ? rows[i-1] : null, pcpl = pr ? wbCPL(pr) : null;
+      var cplCls = '', delta = '';
+      if(cpl != null && pcpl != null){
+        var pct = Math.round((cpl - pcpl) / pcpl * 100);
+        if(pct > 0){ cplCls = ' up'; delta = '▲ ' + nw(String(pct)) + '%'; }
+        else if(pct < 0){ cplCls = ' dn'; delta = '▼ ' + nw(String(-pct)) + '%'; }
+        else delta = '持平';
+      }
+      function cell(k, v, cls, extra, act){
+        return '<div class="wb-cell' + (act ? ' tap' : '') + '"' + (act ? ' data-wb="'+act+'" data-id="'+esc(r.id)+'"' : '') + '>' +
+          '<div class="wb-k">' + k + '</div>' +
+          '<div class="wb-v' + (cls||'') + '">' + v + '</div>' +
+          (extra ? '<div class="wb-delta">' + extra + '</div>' : '') + '</div>';
+      }
+      var rate = (r.attend != null && Number(r.reg) > 0)
+        ? Math.round(Number(r.attend) / Number(r.reg) * 100) + '%' : '';
+      return '<div class="card wb">' +
+        '<div class="wb-top"><span class="wb-n">' + esc(r.n) + '</span>' +
+        '<span class="wb-d">' + nw(mmdd(r.d)) + '</span>' +
+        (r.d >= today ? '<span class="wb-next">下一場</span>' : '') + '</div>' +
+        '<div class="wb-t">' + esc(r.title || '') + '</div>' +
+        '<div class="wb-grid">' +
+          cell('報名', r.reg == null ? '<span class="na">未開</span>' : nw(String(r.reg))) +
+          cell('廣告', Number(r.spend) > 0 ? nw(wbMoney(r.spend)) : '<span class="na">—</span>') +
+          cell('每報名', cpl == null ? '<span class="na">—</span>' : nw(wbMoney(cpl)), cplCls, delta) +
+          cell('出席', r.attend == null ? '<span class="na">撳嚟入</span>' : nw(String(r.attend)), '', rate, 'attend') +
+          cell('成交', r.close == null ? '<span class="na">撳嚟入</span>' : nw(String(r.close)), '', '', 'close') +
+          cell('收入', r.rev == null ? '<span class="na">撳嚟入</span>' : nw(wbMoney(r.rev)), '', '', 'rev') +
+        '</div>' +
+        (r.note && r.d < today ? '<div class="wb-note">' + esc(r.note) + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  // 撳格入數（出席／成交／收入）
+  document.addEventListener('click', function(e){
+    var c = e.target.closest ? e.target.closest('[data-wb]') : null;
+    if(!c) return;
+    var fld = c.getAttribute('data-wb'), id = c.getAttribute('data-id');
+    var r = wbData().rows.filter(function(x){ return x.id === id; })[0];
+    if(!r) return;
+    var lbl = fld === 'attend' ? '出席人數' : fld === 'close' ? '成交單數' : '收入（HK$）';
+    var cur = r[fld] == null ? '' : String(r[fld]);
+    var v = prompt(r.n + '・' + lbl + '（留白＝清走）', cur);
+    if(v === null) return;
+    v = v.trim();
+    r[fld] = v === '' ? null : (Number(v.replace(/[^0-9.\-]/g, '')) || 0);
+    r.m = Date.now();
+    schedulePersist(); renderWb();
+  });
+
   function renderAds(){
     if(!state) return;
     var a = state.ads;
@@ -1507,6 +1647,7 @@
     try{ renderLeads(); }catch(e){}
     try{ renderSM(); }catch(e){}
     try{ renderNotes(); }catch(e){}
+    try{ renderWb(); }catch(e){}
 
     // 掛返 editor 嘅初始值
     if(editing){
@@ -1794,6 +1935,25 @@
     }
     // income：本機為準
     if(local.income) out.income = local.income;
+    // wb（場次）：報名／花費後台為準；出席／成交／收入／備註係手入，邊個 m 新邊個贏
+    if(local.wb || out.wb){
+      var wo = out.wb || local.wb;
+      if(out.wb && local.wb && Array.isArray(local.wb.rows)){
+        var lmw = {}; local.wb.rows.forEach(function(x){ lmw[x.id] = x; });
+        (wo.rows || []).forEach(function(rw){
+          var lw = lmw[rw.id];
+          if(lw && (lw.m || 0) > (rw.m || 0)){
+            ['attend','close','rev','note'].forEach(function(k){ rw[k] = lw[k]; });
+            rw.m = lw.m;
+          }
+        });
+        // 本機有、後台未見到嘅場次照留
+        (local.wb.rows || []).forEach(function(lw2){
+          if(!(wo.rows || []).some(function(x){ return x.id === lw2.id; })) wo.rows.push(lw2);
+        });
+      }
+      out.wb = wo;
+    }
     // sm（SaleSmartly 回覆）：名單／草稿／thread 後台為準；st／text／note 邊個 m 新邊個贏
     if(local.sm || out.sm){
       var so = out.sm || local.sm;
