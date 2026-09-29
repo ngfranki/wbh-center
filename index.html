@@ -709,7 +709,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.4</span></div>
 </div>
 
 <div class="capture">
@@ -1367,9 +1367,10 @@
     var tl = w.tl.slice().sort(function(a,b){
       return (a.d+(a.tm||'00:00')) < (b.d+(b.tm||'00:00')) ? -1 : 1;
     });
-    var done = 0, miss = 0;
+    var done = 0, miss = 0, bot = 0;
     tl.forEach(function(x){
-      if(x.st === 'done') done++;
+      if(x.st === 'auto'){ done++; bot++; }
+      else if(x.st === 'done') done++;
       else if(x.d < today) miss++;
     });
     // 預設由「三日前」睇起，之前嘅摺埋
@@ -1379,7 +1380,8 @@
 
     var rows = show.map(function(x, i){
       var real = tl.indexOf(x);
-      var cls = x.st === 'done' ? ' done' : (x.d < today ? ' miss' : (x.d === today ? ' now' : ''));
+      var ticked = x.st === 'done' || x.st === 'auto';
+      var cls = ticked ? ' done' + (x.st === 'auto' ? ' bot' : '') : (x.d < today ? ' miss' : (x.d === today ? ' now' : ''));
       if(x.k === 'live' || x.k === 'deadline') cls += ' big';
       var tag = TLTAG[x.k] || ['', ''];
       var prevD = i > 0 ? show[i-1].d : null;
@@ -1390,8 +1392,11 @@
       var meta = [];
       if(x.tm) meta.push(x.tm);
       if(x.who && x.who !== '—') meta.push(x.who);
-      if(x.st === 'done') meta.push('✓ 已確認');
-      else if(x.d < today) meta.push('應該出咗——撳一下確認');
+      if(x.st === 'auto') meta.push('🤖 ' + (x.ev || '自動確認'));
+      else if(x.st === 'done') meta.push('✓ 你確認咗');
+      else if(x.d < today) meta.push((x.auto && x.auto.how === 'bcast')
+        ? '⚠️ 驗唔到有冇出——去 Kajabi 睇一睇，然後撳一下'
+        : '應該出咗——撳一下確認');
       return '<div class="tl-i' + cls + '">' +
         '<div class="tl-d">' + dhead + '</div>' +
         '<div class="tl-r"><span class="tl-dot"></span></div>' +
@@ -1405,6 +1410,7 @@
     box.innerHTML = '<div class="card tl-card">' +
       '<div class="tl-head"><span class="tl-title">' + esc(w.n) + ' 節奏表</span>' +
       '<span class="tl-prog">' + nw(String(tl.length)) + ' 個節點・做咗 ' + nw(String(done)) +
+      (bot ? '（' + nw(String(bot)) + ' 個機器剔）' : '') +
       (miss ? '<span class="tl-sep">・' + nw(String(miss)) + ' 個未確認</span>' : '') + '</span></div>' +
       (hidden ? '<button class="tl-more" data-tlmore="1">▲ 睇返之前 ' + nw(String(hidden)) + ' 個</button>' : '') +
       rows + '</div>';
@@ -1423,6 +1429,8 @@
     });
     var item = tl[Number(n.getAttribute('data-tl'))];
     if(!item) return;
+    // 機器剔咗嘅有證據撐住，唔畀手撳走（撳親會即刻俾 wb_tick 剔返，白撳）
+    if(item.st === 'auto'){ alert(item.t + '\n\n🤖 ' + (item.ev || '系統自己驗到') + '\n\n呢粒係機器核實嘅，唔使你撳。'); return; }
     item.st = item.st === 'done' ? null : 'done';
     w.m = Date.now();
     schedulePersist(); renderWb();
