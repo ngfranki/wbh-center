@@ -709,7 +709,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.5</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.6</span></div>
 </div>
 
 <div class="capture">
@@ -1574,8 +1574,11 @@
     var left = (Number(mo.account)||0) - used;
 
     var head = '<div class="mrow head"><span class="k">戶口總數</span>'+
-               '<span class="mval'+(mo.account==null?' empty':'')+'" data-mfield="account">'+
-               nw(mo.account==null?'—':'$'+fmtM(mo.account))+'</span></div>'+
+               (mo.closed ? '<span class="mval">'+nw(mo.account==null?'—':'$'+fmtM(mo.account))+'</span>' :
+               '<form id="accountForm" style="display:flex;gap:6px;align-items:center;max-width:65%">'+
+               '<input id="accountInput" aria-label="戶口總數" type="number" inputmode="decimal" min="0" step="0.01" placeholder="輸入金額" value="'+
+               (mo.account==null?'':Number(mo.account))+'" style="width:120px;min-width:0;max-width:100%;font-size:16px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;background:var(--paper);text-align:right">'+
+               '<button type="submit" class="save" style="white-space:nowrap;padding:10px">儲存</button></form>')+'</div>'+
                '<div class="mrow"><span class="k">今個月收款</span>'+
                '<span class="mval" style="cursor:default">'+nw('$'+fmtM(recv))+'</span></div>';
 
@@ -1600,6 +1603,24 @@
                nw('$'+fmtM(Math.abs(left)))+'</span></div>';
 
     $('moneyCard').innerHTML = head + body + foot;
+    var accountForm = $('accountForm'), accountInput = $('accountInput');
+    if(accountForm){
+      accountInput.addEventListener('focus', function(){ editing = true; });
+      accountInput.addEventListener('input', function(){ editing = true; });
+      accountInput.addEventListener('blur', function(){ editing = false; });
+      accountForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        if(mo.closed) return;
+        var raw = accountInput.value.trim(), val = raw === '' ? null : Number(raw);
+        if(val !== null && (!isFinite(val) || val < 0)){ accountInput.reportValidity(); return; }
+        editing = false;
+        mo.account = val;
+        autoAllocate(true);
+        renderMoney();
+        schedulePersist();
+      });
+    }
+
     var groups = {}, order = [];
     items.forEach(function(it){
       if(!groups[it.course]){ groups[it.course] = []; order.push(it.course); }
