@@ -709,7 +709,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.4</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.5</span></div>
 </div>
 
 <div class="capture">
@@ -839,6 +839,7 @@
     var mv = ev.target.closest('[data-mfield]');
     if(mv && moneyOpen){
       var inc = ensureIncome(), mo = getMonth(inc, moIdx), fld = mv.getAttribute('data-mfield');
+      if(mo.closed) return;
       var LBL = {account:'戶口總數', rent:'租金', ad:'廣告', save:'儲公司（你入嘅底數）',
                  ming:'曉明人工', franki:'Franki 人工', offering:'奉獻'};
       var AUTO = ['rent','ad','ming','franki'];
@@ -865,6 +866,7 @@
     if(dl && moneyOpen){
       var id2 = dl.getAttribute('data-incdel');
       var inc2 = ensureIncome(), mo2 = getMonth(inc2, moIdx);
+      if(mo2.closed) return;
       var it = (mo2.items||[]).filter(function(x){ return x.id === id2; })[0];
       if(it && confirm('刪咗「'+it.name+' '+fmtM(it.amt)+'」？')){
         mo2.items = mo2.items.filter(function(x){ return x.id !== id2; });
@@ -1552,8 +1554,11 @@
                               .map(function(s){ return nw(s); }).join(' · ');
 
     var mo = getMonth(inc, moIdx);
+    $('addIncomeForm').style.display = 'none';
+    $('addIncomeBtn').style.display = mo.closed ? 'none' : '';
+    $('autoAllocBtn').style.display = mo.closed ? 'none' : '';
     var ym = mo.m.split('-');
-    $('moLabel').innerHTML = nw(ym[0])+'年'+nw(String(Number(ym[1])))+'月' + (mo.tag ? ' <span class="stamp">'+esc(mo.tag)+'</span>' : '');
+    $('moLabel').innerHTML = nw(ym[0])+'年'+nw(String(Number(ym[1])))+'月' + (mo.closed ? ' <span class="stamp">已結算</span>' : '') + (mo.tag ? ' <span class="stamp">'+esc(mo.tag)+'</span>' : '');
     $('moPrev').disabled = (moIdx >= inc.months.length - 1);
     $('moNext').disabled = (moIdx <= 0);
 
@@ -1613,7 +1618,7 @@
                      (it.pay ? '<span class="inc-tag'+(it.pay!=='kajabi'?' off':'')+'">'+esc(PAYL[it.pay]||it.pay)+'</span>' : '')+
                      (it.src ? '<span class="inc-tag">'+esc(SRCL[it.src]||it.src)+'</span>' : '')+
                      '<span class="inc-amt">'+nw(fmtM(it.amt))+'</span>'+
-                     '<button class="del" data-incdel="'+esc(it.id)+'">✕</button></div>';
+                     (mo.closed ? '' : '<button class="del" data-incdel="'+esc(it.id)+'">✕</button>')+'</div>';
             }).join('') +
             '<div class="inc-sub">'+esc(c)+' 小計 '+nw('$'+fmtM(sub))+'</div>';
         }).join('')
@@ -1625,6 +1630,7 @@
     // 🔴 09-17 Franki 定：奉獻＝手入；儲公司＝手入底數（saveBase）＋分完多出嘅錢；
     //    租→廣告→曉明（上限 min.ming）→Franki（上限 min.franki）；手入過嘅格照跟手入數，留空＝返自動。
     var inc = ensureIncome(), mo = getMonth(inc, moIdx), mn = inc.min;
+    if(mo.closed) return;
     var acct = Number(mo.account)||0;
     if(!acct){ if(!silent) alert('先入「戶口總數」'); return; }
     if(mo.saveBase == null) mo.saveBase = Number(mo.save)||0;   // 舊資料：當時個儲公司當係你手入底數
@@ -1645,6 +1651,7 @@
     var f = $('addIncomeForm');
     if(f.style.display !== 'none'){ f.style.display = 'none'; return; }
     var inc = ensureIncome(), mo = getMonth(inc, moIdx);
+    if(mo.closed) return;
     var courses = {};
     inc.months.forEach(function(m){ (m.items||[]).forEach(function(i){ courses[i.course]=1; }); });
     var opts = Object.keys(courses).map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
@@ -1666,6 +1673,7 @@
       '<div class="ed-actions"><button class="save" id="ncSave">入數</button>'+
       '<button class="cancel" id="ncCancel">收埋</button></div></div>';
     $('ncSave').addEventListener('click', function(){
+      if(mo.closed || getMonth(ensureIncome(), moIdx).m !== mo.m) return;
       var c = ($('ncCourse').value||'').trim(), nm = ($('ncName').value||'').trim();
       var d = ($('ncDate').value||'').trim(), a = Number($('ncAmt').value);
       if(!c || !nm || !a){ alert('班別／人名／銀碼要填齊'); return; }
@@ -2033,6 +2041,16 @@
   //             notes／weekly（聯集，唔會冚走 Eva 寫嘅紀錄）
   //   本機擁有：income（只有 app 會改）
   function touch(t){ t.m = Date.now(); }
+  function mergeIncome(local, remote){
+    var inc = JSON.parse(JSON.stringify(local || remote || {}));
+    var months = {};
+    (inc.months || []).forEach(function(m){ months[m.m] = m; });
+    ((remote || {}).months || []).forEach(function(m){
+      if(m.closed || !months[m.m]) months[m.m] = JSON.parse(JSON.stringify(m));
+    });
+    inc.months = Object.keys(months).sort().reverse().map(function(k){ return months[k]; });
+    return inc;
+  }
   function mergeRemote(local, remote){
     var out = JSON.parse(JSON.stringify(remote || {}));
     ['tasks','events','notes','weekly'].forEach(function(k){ if(!Array.isArray(out[k])) out[k] = []; });
@@ -2056,8 +2074,9 @@
       }
       out.leads = lo;
     }
-    // income：本機為準
-    if(local.income) out.income = local.income;
+    // Keep backend-added months and settled snapshots when a stale tab saves.
+    if(local.income) out.income = mergeIncome(local.income, out.income);
+
     // wb（場次）：報名／花費後台為準；出席／成交／收入／備註係手入，邊個 m 新邊個贏
     if(local.wb || out.wb){
       var wo = out.wb || local.wb;
