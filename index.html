@@ -513,6 +513,7 @@
 .email-notice{padding:10px 12px;border-radius:10px;background:#e5ece2;font-size:14px;line-height:1.6}.email-warn{background:#fff0d6;color:#77541d}
 #viewEmails details summary{cursor:pointer;line-height:1.6}#viewEmails details p{font-size:13px;line-height:1.65;overflow-wrap:anywhere}
 #emailFilter{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);margin:12px 0}
+.email-group>summary{font-size:20px;padding:4px 0 12px}.email-group>summary .email-meta{display:block;margin-top:6px}.email-group:not([open])>summary{padding-bottom:4px}
 </style>
 
 </head>
@@ -545,9 +546,9 @@
 
   <div class="view" id="viewEmails">
     <section><h2>電郵排程</h2><p id="emailStamp" class="email-meta"></p><p id="emailFresh" class="email-notice"></p>
-    <p class="email-meta">固定日期電郵按實際收件條件分池；範圍可能重疊，無獨立排程不代表完全沒有其他電郵。顯示本月已發送、本月更新的草稿及全部待發排程。建議在最後一封前 7 日準備下一批；這是補稿提示，不代表期間每天都有電郵。</p>
+    <p class="email-meta">先選電郵對象，再看待發題目及日期。共用信會在兩類顯示，但不會重複發送。補稿提示以本類最後一封前 7 日計；每封信的收件對象可能不同。</p>
     <label for="emailFilter">顯示：</label><select id="emailFilter"><option value="all">全部電郵池</option><option value="needs">需要準備下一批</option></select>
-    <div id="emailPools"></div><h2>自動序列</h2><p class="email-meta">以下是加入序列後的發送節奏；已啟用不代表目前有人正在收信。</p><div id="emailSequences"></div></section>
+    <div id="emailPools"></div><details class="card email-pad"><summary><b>自動序列（另外查看）</b></summary><p class="email-meta">以下是加入序列後的發送節奏；已啟用不代表目前有人正在收信。</p><div id="emailSequences"></div></details></section>
   </div>
   <div class="view" id="viewSched">
     <section>
@@ -723,7 +724,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.7</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8</span></div>
 </div>
 
 <div class="capture">
@@ -1732,6 +1733,17 @@
     var last=upcoming.length ? upcoming[upcoming.length-1].sendAt : null;
     return {upcoming:upcoming,last:last,prepareAt:last ? new Date(Date.parse(last)-7*86400000).toISOString():null};
   }
+  function emailGroups(pools){
+    var names={new:'未買過',buyers:'買過入門課',students:'L1 學員',webinar:'Webinar 報名者',other:'其他／待確認'};
+    return Object.keys(names).map(function(id){
+      var seen={},rows=[];
+      pools.forEach(function(p){if((p.categories||['other']).indexOf(id)<0)return;
+        p.rows.forEach(function(r){if(seen[r.id])return;seen[r.id]=true;
+          rows.push(Object.assign({},r,{audienceLabel:p.name,shared:(p.categories||[]).length>1}));
+        });
+      });return {id:id,name:names[id],rows:rows};
+    }).filter(function(g){return g.rows.length;});
+  }
   function renderEmails(){
     var box=$('emailPools'),d=state && state.emailSchedule,now=Date.now();
     if(!box) return;
@@ -1743,22 +1755,24 @@
     $('emailFresh').textContent=fresh ? '每小時更新；Mac 需要開機連線。以下只讀取排程，不會發送電郵。' : '資料超過 3 小時未更新或時間不明，請先核對 Kajabi；以下保留上次快照，不能當成最新排程。';
     $('emailFresh').className='email-notice'+(fresh?'':' email-warn');
     var filter=$('emailFilter').value || 'all';
-    box.innerHTML=d.pools.map(function(p){
+    var opened={};box.querySelectorAll('details[data-email-group][open]').forEach(function(el){opened[el.getAttribute('data-email-group')]=true;});
+    box.innerHTML=emailGroups(d.pools).map(function(p){
       var c=emailCoverage(p.rows,now),drafts=p.rows.filter(function(r){return r.status==='draft';});
       var due=!c.last||Date.parse(c.prepareAt)<=now;
       if(filter==='needs'&&!due)return '';
-      var title=!c.last?'此收件條件未有未來獨立排程':due?'建議現在準備此分組的下一批':'建議 '+emailDate(c.prepareAt)+' 前準備下一批';
-      var head='<section class="card email-pad"><h3>'+esc(p.name)+'</h3><div class="email-notice'+(due?' email-warn':'')+'">'+esc(title)+'</div>'+
+      var title=!c.last?'目前未有已排程電郵':due?'建議開始準備下一批':'建議 '+emailDate(c.prepareAt)+' 前準備下一批';
+      var head='<details class="card email-pad email-group" data-email-group="'+esc(p.id)+'"><summary><b>'+esc(p.name)+'</b><span class="email-meta"> · '+c.upcoming.length+' 封待發'+(drafts.length?' · '+drafts.length+' 封草稿':'')+'</span><span class="email-meta">'+(c.last?'排到 '+esc(emailDate(c.last)):'未有待發電郵')+' · '+(due?'建議開始準備':'建議 '+esc(emailDate(c.prepareAt))+' 前補稿')+'</span></summary><div class="email-notice'+(due?' email-warn':'')+'">'+esc(title)+'</div>'+
         '<p class="email-meta">'+c.upcoming.length+' 封待發'+(c.last?' · 最後一封：'+esc(emailDate(c.last)):'')+' · '+drafts.length+' 封草稿未排期</p>';
       var rows=p.rows.filter(function(r){return r.status!=='delivered';}).sort(function(a,b){return (Date.parse(a.sendAt)||Infinity)-(Date.parse(b.sendAt)||Infinity);});
       function entry(r){var status={draft:'草稿・未排期',scheduled:Date.parse(r.sendAt)<=now?'排程時間已過・待核實發送':'已排程',delivering:'發送中',delivered:'已發送'}[r.status]||'狀態待核實';
-        return '<li class="email-entry"><div class="email-meta">'+esc(status)+' · '+esc(emailDate(r.sendAt||r.sentAt))+'</div><strong>'+esc(r.subject||'（未填電郵題目）')+'</strong><div class="email-meta">'+esc(r.title)+'</div><details><summary>收件範圍</summary><p>'+esc(r.audience||'未設定／未能確認收件條件')+'</p></details></li>';
+        return '<li class="email-entry"><div class="email-meta">'+esc(status)+' · '+esc(emailDate(r.sendAt||r.sentAt))+'</div><strong>'+esc(r.subject||'（未填電郵題目）')+'</strong><div class="email-meta">對象：'+esc(r.audienceLabel||p.name)+(r.shared?' · 兩類共用信（只發送一次）':'')+'</div><details><summary>查看詳細設定</summary><p>'+esc(r.title)+'<br>'+esc(r.audience||'未設定／未能確認收件條件')+'</p></details></li>';
       }
       head+='<ul class="email-list">'+(rows.length?rows.map(entry).join(''):'<li class="email-entry">目前沒有待發電郵或草稿。</li>')+'</ul>';
       var sent=p.rows.filter(function(r){return r.status==='delivered';}).sort(function(a,b){return Date.parse(b.sentAt)-Date.parse(a.sentAt);});
       if(sent.length)head+='<details><summary>最近已發送（'+sent.length+' 封）</summary><ul class="email-list">'+sent.map(entry).join('')+'</ul></details>';
-      return head+'</section>';
+      return head+'</details>';
     }).join('')||'<div class="card email-pad">目前沒有符合篩選的電郵池。</div>';
+    box.querySelectorAll('details[data-email-group]').forEach(function(el){el.open=!!opened[el.getAttribute('data-email-group')];});
     $('emailSequences').innerHTML=(d.sequences||[]).map(function(s){
       var active=s.emails.filter(function(e){return e.status==='published';}),days=active.map(function(e){return e.day;}).filter(function(n){return Number.isFinite(n);});
       return '<details class="card email-pad"><summary>'+esc(s.title)+' · '+active.length+' 封已啟用</summary><p class="email-meta">'+(days.length?'內容排至加入後第 '+Math.max.apply(null,days)+' 日。':'未有已啟用電郵。')+'每人加入日期不同，沒有全池統一結束日。時區：'+esc(s.timeZone||'未確認')+'</p><ul class="email-list">'+s.emails.map(function(e){var minutes=e.minutes;var time=Number.isFinite(minutes)?String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0'):'時間未確認';return '<li class="email-entry"><div class="email-meta">'+esc(e.status==='published'?'已啟用':'草稿／未啟用')+' · 加入後第 '+esc(String(e.day))+' 日 '+esc(time)+'</div><strong>'+esc(e.subject||e.title)+'</strong></li>';}).join('')+'</ul></details>';
