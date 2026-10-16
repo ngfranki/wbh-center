@@ -506,6 +506,13 @@
     white-space:nowrap;
   }
   @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+
+.email-pad{padding:18px;margin-bottom:16px}.email-pad h3{margin:0 0 12px;font-size:20px}
+.email-list{list-style:none;padding:0;margin:0}.email-entry{padding:14px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.email-entry:last-child{border-bottom:0}
+.email-entry strong{display:block;font-size:17px;line-height:1.55;margin:5px 0}.email-meta{font-size:13px;color:var(--muted);line-height:1.6}
+.email-notice{padding:10px 12px;border-radius:10px;background:#e5ece2;font-size:14px;line-height:1.6}.email-warn{background:#fff0d6;color:#77541d}
+#viewEmails details summary{cursor:pointer;line-height:1.6}#viewEmails details p{font-size:13px;line-height:1.65;overflow-wrap:anywhere}
+#emailFilter{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);margin:12px 0}
 </style>
 
 </head>
@@ -531,10 +538,17 @@
     <button class="tab" data-view="money" id="tabMoney">資金</button>
     <button class="tab" data-view="leads" id="tabLeads">搵客</button>
     <button class="tab" data-view="ads" id="tabAds">廣告</button>
+    <button class="tab" data-view="emails" id="tabEmails">電郵</button>
     <button class="tab" data-view="wb" id="tabWb">場次</button>
     <button class="tab" data-view="sm" id="tabSM">回覆<span class="sm-badge" id="smBadge"></span></button>
   </div>
 
+  <div class="view" id="viewEmails">
+    <section><h2>電郵排程</h2><p id="emailStamp" class="email-meta"></p><p id="emailFresh" class="email-notice"></p>
+    <p class="email-meta">固定日期電郵按實際收件條件分池；範圍可能重疊，無獨立排程不代表完全沒有其他電郵。顯示本月已發送、本月更新的草稿及全部待發排程。建議在最後一封前 7 日準備下一批；這是補稿提示，不代表期間每天都有電郵。</p>
+    <label for="emailFilter">顯示：</label><select id="emailFilter"><option value="all">全部電郵池</option><option value="needs">需要準備下一批</option></select>
+    <div id="emailPools"></div><h2>自動序列</h2><p class="email-meta">以下是加入序列後的發送節奏；已啟用不代表目前有人正在收信。</p><div id="emailSequences"></div></section>
+  </div>
   <div class="view" id="viewSched">
     <section>
       <h2>一週時間表 <span class="count" id="schedStamp"></span></h2>
@@ -709,7 +723,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.6</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.7</span></div>
 </div>
 
 <div class="capture">
@@ -774,7 +788,7 @@
   var VIEWS = {sched:['viewSched','tabSched'], tasks:['viewTasks','tabTasks'],
                notes:['viewNotes','tabNotes'], social:['viewSocial','tabSocial'],
                done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds'],
-               leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM'], wb:['viewWb','tabWb']};
+               leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM'], wb:['viewWb','tabWb'], emails:['viewEmails','tabEmails']};
   function setView(v){
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
@@ -1708,6 +1722,52 @@
     $('ncCancel').addEventListener('click', function(){ f.style.display = 'none'; });
   }
 
+  // Email schedules are read-only backend snapshots, never inferred from old plans.
+  function emailDate(value){
+    if(!value || !isFinite(Date.parse(value))) return '未設定日期';
+    return new Intl.DateTimeFormat('zh-HK',{timeZone:'Asia/Hong_Kong',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value));
+  }
+  function emailCoverage(rows, now){
+    var upcoming=rows.filter(function(r){return r.status==='scheduled' && Date.parse(r.sendAt)>now;}).sort(function(a,b){return Date.parse(a.sendAt)-Date.parse(b.sendAt);});
+    var last=upcoming.length ? upcoming[upcoming.length-1].sendAt : null;
+    return {upcoming:upcoming,last:last,prepareAt:last ? new Date(Date.parse(last)-7*86400000).toISOString():null};
+  }
+  function renderEmails(){
+    var box=$('emailPools'),d=state && state.emailSchedule,now=Date.now();
+    if(!box) return;
+    if(!d || !Array.isArray(d.pools)){
+      box.innerHTML='<div class="card email-pad">尚未取得 Kajabi 電郵排程；未能判斷哪些電郵池需要補稿。</div>';return;
+    }
+    var age=now-Date.parse(d.checkedAt),fresh=isFinite(age)&&age>=-300000&&age<3*3600000;
+    $('emailStamp').textContent='Kajabi 核對：'+emailDate(d.checkedAt)+'（香港時間）';
+    $('emailFresh').textContent=fresh ? '每小時更新；Mac 需要開機連線。以下只讀取排程，不會發送電郵。' : '資料超過 3 小時未更新或時間不明，請先核對 Kajabi；以下保留上次快照，不能當成最新排程。';
+    $('emailFresh').className='email-notice'+(fresh?'':' email-warn');
+    var filter=$('emailFilter').value || 'all';
+    box.innerHTML=d.pools.map(function(p){
+      var c=emailCoverage(p.rows,now),drafts=p.rows.filter(function(r){return r.status==='draft';});
+      var due=!c.last||Date.parse(c.prepareAt)<=now;
+      if(filter==='needs'&&!due)return '';
+      var title=!c.last?'此收件條件未有未來獨立排程':due?'建議現在準備此分組的下一批':'建議 '+emailDate(c.prepareAt)+' 前準備下一批';
+      var head='<section class="card email-pad"><h3>'+esc(p.name)+'</h3><div class="email-notice'+(due?' email-warn':'')+'">'+esc(title)+'</div>'+
+        '<p class="email-meta">'+c.upcoming.length+' 封待發'+(c.last?' · 最後一封：'+esc(emailDate(c.last)):'')+' · '+drafts.length+' 封草稿未排期</p>';
+      var rows=p.rows.filter(function(r){return r.status!=='delivered';}).sort(function(a,b){return (Date.parse(a.sendAt)||Infinity)-(Date.parse(b.sendAt)||Infinity);});
+      function entry(r){var status={draft:'草稿・未排期',scheduled:Date.parse(r.sendAt)<=now?'排程時間已過・待核實發送':'已排程',delivering:'發送中',delivered:'已發送'}[r.status]||'狀態待核實';
+        return '<li class="email-entry"><div class="email-meta">'+esc(status)+' · '+esc(emailDate(r.sendAt||r.sentAt))+'</div><strong>'+esc(r.subject||'（未填電郵題目）')+'</strong><div class="email-meta">'+esc(r.title)+'</div><details><summary>收件範圍</summary><p>'+esc(r.audience||'未設定／未能確認收件條件')+'</p></details></li>';
+      }
+      head+='<ul class="email-list">'+(rows.length?rows.map(entry).join(''):'<li class="email-entry">目前沒有待發電郵或草稿。</li>')+'</ul>';
+      var sent=p.rows.filter(function(r){return r.status==='delivered';}).sort(function(a,b){return Date.parse(b.sentAt)-Date.parse(a.sentAt);});
+      if(sent.length)head+='<details><summary>最近已發送（'+sent.length+' 封）</summary><ul class="email-list">'+sent.map(entry).join('')+'</ul></details>';
+      return head+'</section>';
+    }).join('')||'<div class="card email-pad">目前沒有符合篩選的電郵池。</div>';
+    $('emailSequences').innerHTML=(d.sequences||[]).map(function(s){
+      var active=s.emails.filter(function(e){return e.status==='published';}),days=active.map(function(e){return e.day;}).filter(function(n){return Number.isFinite(n);});
+      return '<details class="card email-pad"><summary>'+esc(s.title)+' · '+active.length+' 封已啟用</summary><p class="email-meta">'+(days.length?'內容排至加入後第 '+Math.max.apply(null,days)+' 日。':'未有已啟用電郵。')+'每人加入日期不同，沒有全池統一結束日。時區：'+esc(s.timeZone||'未確認')+'</p><ul class="email-list">'+s.emails.map(function(e){var minutes=e.minutes;var time=Number.isFinite(minutes)?String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0'):'時間未確認';return '<li class="email-entry"><div class="email-meta">'+esc(e.status==='published'?'已啟用':'草稿／未啟用')+' · 加入後第 '+esc(String(e.day))+' 日 '+esc(time)+'</div><strong>'+esc(e.subject||e.title)+'</strong></li>';}).join('')+'</ul></details>';
+    }).join('');
+  }
+  $('tabEmails').addEventListener('click',function(){setView('emails');renderEmails();});
+  $('emailFilter').addEventListener('change',renderEmails);
+  setInterval(function(){if(curView==='emails')renderEmails();},60000);
+
   // ---------- render ----------
   function fmtHeader(){
     var n = new Date();
@@ -1800,6 +1860,7 @@
     try{ renderSM(); }catch(e){}
     try{ renderNotes(); }catch(e){}
     try{ renderWb(); }catch(e){}
+    renderEmails();
 
     // 掛返 editor 嘅初始值
     if(editing){
@@ -2519,7 +2580,7 @@
   try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
   moneyOpen = true;
   if(startView === 'done') startView = 'tasks';
-  setView(['sched','tasks','notes','social','money','ads','leads'].indexOf(startView) >= 0 ? startView : 'sched');
+  setView(['sched','tasks','notes','social','money','ads','leads','wb','sm','emails'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   function boot(){
     if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
