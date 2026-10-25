@@ -724,7 +724,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.1</span></div>
 </div>
 
 <div class="capture">
@@ -744,10 +744,51 @@
 
   var BKEY = '';
   try{ BKEY = localStorage.getItem('boardKey') || ''; }catch(e){}
+  var keyDialogPromise = null;
   function askKey(msg){
-    var k = prompt(msg || '輸入暗號（問 Franki 攞）');
-    if(k){ BKEY = k.trim(); try{ localStorage.setItem('boardKey', BKEY); }catch(e){} }
-    return !!BKEY;
+    if(keyDialogPromise) return keyDialogPromise;
+    keyDialogPromise = new Promise(function(resolve){
+      var panel = document.createElement('div');
+      panel.id = 'boardKeyPanel';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+      panel.setAttribute('aria-labelledby', 'boardKeyTitle');
+      panel.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(20,35,30,.55);padding:20px';
+      panel.innerHTML = '<form style="background:white;color:#243a30;padding:24px;border-radius:16px;max-width:420px;width:100%;box-sizing:border-box">' +
+        '<h2 id="boardKeyTitle" style="margin-top:0">開啟戰略中心</h2>' +
+        '<p id="boardKeyMessage"></p><label for="boardKeyInput">戰略中心暗號</label>' +
+        '<input id="boardKeyInput" type="password" autocomplete="current-password" required style="display:block;width:100%;box-sizing:border-box;padding:12px;margin:10px 0 18px;font-size:16px">' +
+        '<button type="submit" style="padding:10px 18px">開啟</button> ' +
+        '<button type="button" id="boardKeyCancel" style="padding:10px 18px">稍後再開</button></form>';
+      panel.querySelector('#boardKeyMessage').textContent = msg || '輸入原有暗號以連線。';
+      var input = panel.querySelector('#boardKeyInput');
+      var form = panel.querySelector('form');
+      var previousFocus = document.activeElement;
+      function finish(ok){
+        input.value = '';
+        panel.remove(); keyDialogPromise = null;
+        if(previousFocus && previousFocus.focus) previousFocus.focus();
+        resolve(ok);
+      }
+      form.addEventListener('submit', function(event){
+        event.preventDefault(); var value = input.value.trim();
+        if(!value){ input.focus(); return; }
+        BKEY = value;
+        try{ localStorage.setItem('boardKey', BKEY); }catch(error){}
+        finish(true);
+      });
+      panel.querySelector('#boardKeyCancel').addEventListener('click', function(){ finish(false); });
+      panel.addEventListener('keydown', function(event){
+        if(event.key === 'Escape'){ event.preventDefault(); finish(false); }
+        if(event.key === 'Tab'){
+          var last = panel.querySelector('#boardKeyCancel');
+          if(event.shiftKey && document.activeElement === input){ event.preventDefault(); last.focus(); }
+          else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); input.focus(); }
+        }
+      });
+      document.body.appendChild(panel); input.focus();
+    });
+    return keyDialogPromise;
   }
 
   var state = null, lastUpdated = null;
@@ -2596,8 +2637,8 @@
   if(startView === 'done') startView = 'tasks';
   setView(['sched','tasks','notes','social','money','ads','leads','wb','sm','emails'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
-  function boot(){
-    if(!BKEY && !askKey('輸入暗號開板（問 Franki 攞）')){ setSync('err', '要暗號先開到——刷新再入'); return; }
+  async function boot(){
+    if(!BKEY && !(await askKey('輸入原有暗號開板'))){ setSync('err', '未連線：需要暗號，按重新載入再輸入'); return; }
     if(!state){
       var cached = cacheLoad();
       if(cached && cached.state){
@@ -2605,7 +2646,7 @@
         setSync('', '上次嘅資料·更新緊…');
       } else setSync('', '載緊資料…');
     } else setSync('', '更新緊…');
-    fetchBoard(function(row, reached){
+    fetchBoard(async function(row, reached){
       if(!row){
         if(!reached){
           setSync('err', '連唔到 — 撳呢行重試');
@@ -2615,8 +2656,8 @@
         }
         try{ localStorage.removeItem('boardKey'); }catch(e){}
         BKEY = '';
-        if(askKey('暗號唔啱——再入一次')){ boot(); return; }
-        setSync('err', '要暗號先開到——刷新再入');
+        if(await askKey('暗號不正確，請再輸入')){ boot(); return; }
+        setSync('err', '未連線：需要暗號，按重新載入再輸入');
         return;
       }
       if(dirty && state){ row = {state: mergeRemote(state, row.state), updated_at: row.updated_at}; }
