@@ -724,7 +724,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.2</span></div>
 </div>
 
 <div class="capture">
@@ -2166,7 +2166,13 @@
     if(!state) return;
     fetchBoard(function(row, reached){
       if(row && row.state){ state = mergeRemote(state, row.state); baseTs = row.updated_at || null; }
-      else baseTs = null;
+      else {
+        // Never create/overwrite the main board after a failed or empty read.
+        dirty = true;
+        setSync('err', reached ? '未讀到資料版本・未儲存，請稍後再改動重試' : '連線失敗・未儲存，請稍後再改動重試');
+        return;
+      }
+      if(!baseTs){ dirty = true; setSync('err', '缺少資料版本・未儲存'); return; }
       doPersist();
     });
   }
@@ -2313,20 +2319,19 @@
 
   function doPersist(){
     if(!state) return;
+    if(!baseTs){ dirty = true; setSync('err', '缺少資料版本・未儲存'); return; }
+    var expectedTs = baseTs;
     var hdr = {apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY, 'Content-Type':'application/json',
                Prefer:'resolution=merge-duplicates,return=representation'};
     var nowIso = new Date().toISOString();
-    var req = baseTs
-      ? fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(baseTs),
-              {method:'PATCH', headers:hdr, body: JSON.stringify({state:state, updated_at:nowIso})})
-      : fetch(SB+'/rest/v1/wbh_board?on_conflict=id',
-              {method:'POST', headers:hdr, body: JSON.stringify([{id:'main', state:state, updated_at:nowIso}])});
+    var req = fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(expectedTs),
+              {method:'PATCH', headers:hdr, body: JSON.stringify({state:state, updated_at:nowIso})});
     req.then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(rows){
-        if(baseTs && (!rows || !rows.length)){
+        if(!Array.isArray(rows) || !rows.length){
           // 🔴 樂觀鎖撞咗：有人（Eva／曉明）啱啱寫咗——重新攞最新版合併再寫，最多 5 次
           if(++persistRetry <= 5){ setSync('', '有人同時改緊・合併緊…'); persist(); return; }
-          persistRetry = 0; baseTs = null; doPersist(); return;   // 5 次都撞＝退返 upsert 保底
+          persistRetry = 0; dirty = true; setSync('err', '多人同時改動・未儲存，請稍後再改動重試'); return;
         }
         persistRetry = 0;
         dirty = false;
@@ -2337,7 +2342,7 @@
       })
       .catch(function(){
         setSync('err', '儲唔到，會再試');
-        setTimeout(doPersist, 4000);
+        setTimeout(persist, 4000);
       });
   }
 
