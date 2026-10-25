@@ -724,7 +724,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.3</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.4</span></div>
 </div>
 
 <div class="capture">
@@ -2155,10 +2155,60 @@
   }
 
   // ---------- persist（Supabase）----------
+  var draftScope = '', draftChecked = false, draftStored = true;
+  async function prepareDraftScope(){
+    try{
+      var bytes = new TextEncoder().encode(BKEY);
+      var hash = await crypto.subtle.digest('SHA-256', bytes);
+      var tag = Array.from(new Uint8Array(hash)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
+      if(tag !== draftScope) draftChecked = false;
+      draftScope = tag;
+    }catch(e){ draftScope = ''; }
+  }
+  function savePendingDraft(){
+    try{
+      if(!draftScope) throw 0;
+      sessionStorage.setItem('boardPendingDraft', JSON.stringify({schema:1, scope:draftScope, at:new Date().toISOString(), state:state}));
+      draftStored = true;
+    }catch(e){ draftStored = false; }
+    return draftStored;
+  }
+  function loadPendingDraft(){
+    try{
+      if(!draftScope) return null;
+      var d = JSON.parse(sessionStorage.getItem('boardPendingDraft') || 'null');
+      return d && d.schema === 1 && d.scope === draftScope && d.state && Array.isArray(d.state.tasks) ? d : null;
+    }catch(e){ return null; }
+  }
+  function clearPendingDraft(){
+    try{ var d = loadPendingDraft(); if(d) sessionStorage.removeItem('boardPendingDraft'); }catch(e){}
+  }
+  function offerPendingDraft(){
+    return new Promise(function(resolve){
+      var panel = document.createElement('div');
+      panel.setAttribute('role','dialog'); panel.setAttribute('aria-modal','true');
+      panel.setAttribute('aria-label','發現未儲改動');
+      panel.style.cssText = 'position:fixed;inset:0;z-index:100001;display:grid;place-items:center;background:#18231bcc;padding:24px';
+      panel.innerHTML = '<section style="max-width:420px;background:#fff;color:#24362b;border-radius:18px;padding:24px"><h2>發現未儲改動</h2><p>這個分頁留有未儲存草稿。恢復後會先讀取及合併雲端版本，再重新嘗試儲存。</p><p>草稿只保存在這個分頁；關閉分頁或清除瀏覽器資料後，不能保證仍可恢復。</p><button type="button" data-restore>恢復並嘗試儲存</button><button type="button" data-cloud>使用雲端版本，保留草稿備份</button><p data-error role="status"></p></section>';
+      var restore = panel.querySelector('[data-restore]'), cloud = panel.querySelector('[data-cloud]');
+      restore.onclick = function(){ panel.remove(); resolve(true); };
+      cloud.onclick = function(){
+        try{ sessionStorage.setItem('boardPendingDraftBackup', sessionStorage.getItem('boardPendingDraft')); }
+        catch(e){ panel.querySelector('[data-error]').textContent = '無法保存草稿備份，請先恢復未儲改動。'; return; }
+        clearPendingDraft(); panel.remove(); resolve(false);
+      };
+      panel.onkeydown = function(e){
+        if(e.key === 'Tab'){ e.preventDefault(); (document.activeElement === restore ? cloud : restore).focus(); }
+      };
+      document.body.appendChild(panel); restore.focus();
+    });
+  }
+
   function schedulePersist(){
     mutationRevision++;
     dirty = true;
-    setSync('', '儲緊…');
+    savePendingDraft();
+    setSync(draftStored ? '' : 'err', draftStored ? '儲緊…' : '草稿未能備份・請保留分頁，正在嘗試雲端儲存');
     if(publishTimer) clearTimeout(publishTimer);
     publishTimer = setTimeout(persist, 700);
   }
@@ -2313,6 +2363,7 @@
           var m = t.match(/id="verTag">(v[0-9.]+)</);
           var cur = $('verTag');
           if(m && cur && m[1] !== cur.textContent){
+            if(dirty){ setSync('err', '有新版・未儲改動完成前暫不更新'); return; }
             setSync('', '有新版・更新緊…');
             setTimeout(function(){ location.reload(); }, 600);
           }
@@ -2344,6 +2395,7 @@
         if(rows && rows[0]) lastUpdated = rows[0].updated_at;
         cacheSave({state:sentState, updated_at:lastUpdated});
         if(dirty){ schedulePersist(); return; }
+        clearPendingDraft();
         setSync('ok', '已儲低 '+new Date().toTimeString().slice(0,5));
         try{ renderAds(); renderNotes(); }catch(e){}
       })
@@ -2652,6 +2704,7 @@
   var retryTimer = null;
   async function boot(){
     if(!BKEY && !(await askKey('輸入原有暗號開板'))){ setSync('err', '未連線：需要暗號，按重新載入再輸入'); return; }
+    await prepareDraftScope();
     if(!state){
       var cached = cacheLoad();
       if(cached && cached.state){
@@ -2673,8 +2726,16 @@
         setSync('err', '未連線：需要暗號，按重新載入再輸入');
         return;
       }
+      var confirmedRow = row;
+      if(!draftChecked){
+        draftChecked = true;
+        var pendingDraft = loadPendingDraft();
+        if(pendingDraft && await offerPendingDraft()){
+          state = mergeRemote(pendingDraft.state, row.state); dirty = true;
+        }
+      }
       if(dirty && state){ row = {state: mergeRemote(state, row.state), updated_at: row.updated_at}; }
-      applyState(row); cacheSave(row);
+      applyState(row); cacheSave(confirmedRow);
       setSync('ok', dirty ? '合併咗・儲緊…' : '同步已接通');
       render();
       if(dirty) schedulePersist();
