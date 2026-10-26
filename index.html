@@ -686,6 +686,14 @@
         <button class="mo-btn" id="moNext">›</button>
       </div>
 
+      <button class="past-link" id="addMonthBtn">＋ 新增月份</button>
+      <form class="card" id="addMonthForm" hidden style="margin:10px 0 18px">
+        <label for="newMoneyMonth">選擇月份</label>
+        <input id="newMoneyMonth" type="month" min="2000-01" max="9999-12" required style="display:block;max-width:100%;margin:10px 0;padding:10px;font-size:16px">
+        <p id="newMonthStatus" role="status" style="font-size:14px"></p>
+        <button type="submit" class="save" id="newMonthSave">建立／開啟月份</button>
+        <button type="button" class="cancel" id="newMonthCancel">取消</button>
+      </form>
       <div class="card" id="moneyCard"></div>
       <button class="past-link" id="autoAllocBtn">⚡ 重新分餅仔（奉獻你入・租→廣告→曉明→Franki 到上限・多出入儲公司）</button>
 
@@ -724,7 +732,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.8.4</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.9</span></div>
 </div>
 
 <div class="capture">
@@ -892,6 +900,19 @@
   $('autoAllocBtn').addEventListener('click', autoAllocate);
   $('moPrev').addEventListener('click', function(){ moIdx++; renderMoney(); });
   $('moNext').addEventListener('click', function(){ moIdx--; renderMoney(); });
+  $('addMonthBtn').addEventListener('click',showAddMonth);
+  $('newMonthCancel').addEventListener('click',function(){ $('addMonthForm').hidden=true; });
+  $('newMoneyMonth').addEventListener('focus',function(){editing=true;});
+  $('newMoneyMonth').addEventListener('blur',function(){editing=false;});
+  $('addMonthForm').addEventListener('submit',function(e){
+    e.preventDefault();var button=$('newMonthSave');if(button.disabled)return;
+    button.disabled=true;$('newMonthCancel').disabled=true;
+    $('newMonthStatus').textContent='正在核對並儲存月份…';
+    createMoneyMonth($('newMoneyMonth').value,function(error){
+      button.disabled=false;$('newMonthCancel').disabled=false;
+      $('newMonthStatus').textContent=error||'月份已開啟。';
+    });
+  });
   document.addEventListener('click', function(ev){
     var mv = ev.target.closest('[data-mfield]');
     if(mv && moneyOpen){
@@ -1589,6 +1610,73 @@
     var n = new Date();
     return n.getFullYear()+'-'+pad(n.getMonth()+1);
   }
+  function validMoneyMonth(key){
+    return /^(?:[2-9][0-9]{3})-(?:0[1-9]|1[0-2])$/.test(key);
+  }
+  function nextMoneyMonth(months){
+    var keys=(months||[]).map(function(m){return m.m;}).filter(validMoneyMonth).sort();
+    var key=keys.length?keys[keys.length-1]:curMonthKey();
+    var year=Number(key.slice(0,4)), month=Number(key.slice(5));
+    return month===12 ? String(year+1)+'-01' : String(year)+'-'+pad(month+1);
+  }
+  function blankMoneyMonth(key){
+    return {m:key,account:null,franki:null,ming:null,rent:null,save:null,ad:null,offering:null,tag:'',items:[]};
+  }
+  function openMoneyMonth(key){
+    var inc=ensureIncome();inc.months.sort(function(a,b){return a.m<b.m?1:a.m>b.m?-1:0;});
+    moIdx=inc.months.findIndex(function(m){return m.m===key;});
+    if(moIdx<0)moIdx=0;
+    $('addMonthForm').hidden=true;renderMoney();
+  }
+  function showAddMonth(){
+    if(!state)return;
+    var form=$('addMonthForm');form.hidden=false;
+    $('newMoneyMonth').value=nextMoneyMonth(ensureIncome().months);
+    $('newMonthStatus').textContent='只建立空白月份；基本預算沿用目前設定，戶口、分配及收款不會複製。';
+    $('newMoneyMonth').focus();
+  }
+  // Create against the latest cloud revision. Existing months are opened, never replaced.
+  function createMoneyMonth(key,cb){
+    if(!validMoneyMonth(key)){cb('請選擇有效月份。');return;}
+    if(!state || dirty || persistBusy){cb('目前有資料正在儲存，請待顯示「已儲低」後再新增月份。');return;}
+    persistBusy=true;
+    var startRevision=mutationRevision, tries=0;
+    function finish(error,row){
+      persistBusy=false;
+      if(row){
+        var newer=mutationRevision!==startRevision;
+        if(newer){state=mergeRemote(state,row.state);lastUpdated=row.updated_at;}
+        else applyState(row);
+        cacheSave(row);openMoneyMonth(key);
+        if(newer || dirty) schedulePersist();
+        else setSync('ok','月份已儲低 '+new Date().toTimeString().slice(0,5));
+      }else if(dirty){schedulePersist();}
+      cb(error);
+    }
+    function attempt(){
+      fetchBoard(function(row){
+        if(!row || !row.state || !row.updated_at){finish('未能讀取最新資料，未新增月份。請稍後重試。');return;}
+        var merged=mergeRemote(state,row.state), months=((row.state.income||{}).months||[]);
+        if(months.some(function(m){return m.m===key;})){finish(null,row);return;}
+        if(!merged.income)merged.income={};
+        if(!Array.isArray(merged.income.months))merged.income.months=[];
+        merged.income.months.push(blankMoneyMonth(key));
+        merged.income.months.sort(function(a,b){return a.m<b.m?1:a.m>b.m?-1:0;});
+        var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+        var timer=setTimeout(function(){if(ctrl)ctrl.abort();},12000);
+        fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(row.updated_at),{
+          method:'PATCH',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'x-client-info':BKEY,'Content-Type':'application/json',Prefer:'return=representation'},
+          body:JSON.stringify({state:merged,updated_at:new Date().toISOString()}),signal:ctrl?ctrl.signal:undefined
+        }).then(function(r){if(!r.ok)throw Error('save');return r.json();}).then(function(rows){
+          clearTimeout(timer);
+          if(!Array.isArray(rows) || !rows.length){if(++tries<6){attempt();return;}finish('多人同時改動，未確認新增；請稍後重試。');return;}
+          finish(null,rows[0]);
+        }).catch(function(){clearTimeout(timer);finish('連線中斷，未能確認儲存；重試時會先檢查月份，避免重複新增。');});
+      });
+    }
+    attempt();
+  }
+
   function getMonth(inc, i){
     if(!inc.months.length){
       inc.months.push({m:curMonthKey(), account:null, franki:null, ming:null,
@@ -1655,9 +1743,9 @@
     }).join('');
 
     var foot = '<div class="mrow" style="background:'+(left<0?'var(--danger-soft)':'var(--chip)')+'">'+
-               '<span class="k" style="font-weight:700">'+(left<0?'超咗':(left>0?'未分配':'✓ 分晒'))+'</span>'+
+               '<span class="k" style="font-weight:700">'+(mo.account==null || mo.account===''?'先輸入戶口總數':(left<0?'超咗':(left>0?'未分配':'✓ 分晒')))+'</span>'+
                '<span class="mval" style="cursor:default;font-weight:700;color:'+(left<0?'var(--danger)':'var(--ink)')+'">'+
-               nw('$'+fmtM(Math.abs(left)))+'</span></div>';
+               nw(mo.account==null || mo.account===''?'—':'$'+fmtM(Math.abs(left)))+'</span></div>';
 
     $('moneyCard').innerHTML = head + body + foot;
     var accountForm = $('accountForm'), accountInput = $('accountInput');
