@@ -516,7 +516,172 @@
 .email-group>summary{font-size:20px;padding:4px 0 12px}.email-group>summary .email-meta{display:block;margin-top:6px}.email-group:not([open])>summary{padding-bottom:4px}
 </style>
 
-</head>
+<style>
+#viewTasks>section:not(#taskCenter){display:none}#tabSched{display:none}#taskCenter{--tc-ink:#203e30;--tc-soft:#eff3ed;max-width:1060px;margin:auto;color:var(--tc-ink);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif}#taskCenter button,.tc-dialog button{font:inherit;cursor:pointer;border:1px solid #d6ddcf;border-radius:12px;background:#fffdf8;color:#244735;padding:9px 13px;min-height:42px}#taskCenter button:hover,.tc-dialog button:hover{background:#e9f0e6}#taskCenter button:focus-visible,.tc-dialog :focus-visible{outline:3px solid #bc873d;outline-offset:2px}#taskCenter button[aria-current=page],#taskCenter button[aria-pressed=true],.tc-dialog .selected{background:#365d46;color:white}#taskCenter input,#taskCenter select,.tc-dialog input:not([type=checkbox]),.tc-dialog select,.tc-dialog textarea{font:inherit;border:1px solid #ccd7c7;border-radius:10px;padding:10px;background:#fff;box-sizing:border-box;min-width:0}.tc-crumb{font-size:12px;color:#777d70;margin:10px 0}.tc-crumb button{border:0!important;background:none!important;padding:0!important;min-height:24px!important;font-size:12px!important}.tc-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;position:sticky;top:0;background:#f6f3e9;z-index:5;padding:10px 0}.tc-nav button{padding:10px 3px!important;font-size:14px!important}.tc-actions{display:flex;justify-content:flex-end;gap:12px;align-items:center;margin:8px 0}.tc-hero{padding:16px 0 8px}.tc-hero h2{font-size:32px;margin:4px 0}.tc-eyebrow{color:#a47638;font-size:12px;letter-spacing:.12em}.tc-hero p,.tc-hint{color:#6f7769;font-size:14px}.tc-surface{background:#fffdf8;border:1px solid #e1e3d7;border-radius:16px;padding:18px;margin:14px 0}.tc-surface summary{font-weight:650;cursor:pointer;min-height:28px}.tc-surface summary span{color:#8c927d;margin-left:12px}#tcCapture{display:flex;gap:8px;margin:14px 0}#tcCapture input{flex:1;width:0}#tcCapture button{background:#365d46;color:white}.tc-inbox-row{display:flex;gap:6px;align-items:center;border-bottom:1px solid #eee;padding:10px 0}.tc-inbox-row span{flex:1;overflow-wrap:anywhere}.tc-inbox-row button{font-size:12px!important;padding:6px!important}.tc-empty{color:#8a9081;font-size:13px;padding:5px 0}.tc-row{display:flex;align-items:flex-start;gap:6px;padding:9px 0;border-bottom:1px solid #e5e9df}.tc-tick{flex:none;width:38px;min-height:38px!important;padding:3px!important;font-size:22px!important}.tc-title{flex:1;text-align:left;border:0!important;background:transparent!important;padding:3px!important;min-width:0;overflow-wrap:anywhere}.tc-title small{display:block;color:#7c8574;font-size:12px;font-weight:400;margin-top:5px}.tc-done .tc-title{text-decoration:line-through;color:#88917d}.tc-done .tc-tick{background:#e5eddf!important}.tc-heading,.tc-tools,.tc-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0}.tc-heading{justify-content:space-between}.tc-heading h2{margin:0}.tc-tools input{flex:1}.tc-warning{border-left:4px solid #c48b3c;padding:10px;background:#fff2da}.tc-message{color:#865a21;font-size:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.tc-message:empty{display:none}.tc-date-group{border-top:1px solid #ddd;padding:8px 0}.tc-date-group h4{margin:5px 0;font-size:15px}.tc-project{display:block;width:100%;text-align:left;padding:20px!important;margin:12px 0}.tc-project small{display:block;margin:9px 0}.tc-project-task{padding:14px;background:#fffdf8;border-radius:13px;margin:10px 0}.tc-project-task>small{color:#777}.tc-project-task>div:last-child button{font-size:12px!important;margin-top:8px}#taskCenter progress{width:100%;height:9px;accent-color:#547659}.tc-calendar-scroll{overflow:auto;border:1px solid #d9dfd1;border-radius:12px;max-height:650px}.tc-calendar{display:grid;grid-template-columns:55px repeat(7,minmax(135px,1fr));min-width:1000px;background:#fffdf8}.tc-day{border-left:1px solid #e1e6da}.tc-day-head{height:60px;position:sticky;top:0;z-index:3;padding:10px 5px;box-sizing:border-box;background:#f4f5ec;font-size:12px;font-weight:600}.tc-day-body{position:relative;background:repeating-linear-gradient(to bottom,transparent 0,transparent 29px,#e6eadf 29px,#e6eadf 30px)}.tc-today{background:#edf5e7}.tc-today .tc-day-head{background:#3e6047;color:white}.tc-hours{font-size:11px;color:#798170;text-align:center}.tc-busy{position:absolute;left:2px;right:2px;box-sizing:border-box;background:#dddeda99;border-left:3px solid #a3aa9c;font-size:11px;color:#697260;padding:4px;overflow:hidden}.tc-block{position:absolute;left:4px;right:4px;z-index:2;border:1px solid #a4b99b;background:#e3eedb;border-radius:8px;box-sizing:border-box}.tc-block .tc-row{padding:2px;border:0}.tc-block .tc-title{font-size:12px!important}.tc-block .tc-tick{width:25px;min-height:28px!important}.tc-block.tc-done{opacity:.7}.tc-dialog{width:min(680px,calc(100vw - 28px));max-height:90vh;overflow:auto;border:1px solid #cdd7c5;border-radius:20px;padding:24px;background:#faf9f1;color:#26432e;box-sizing:border-box}.tc-dialog::backdrop{background:#192d25a6}.tc-dialog label{display:block;font-size:14px;margin:12px 0}.tc-dialog label>input:not([type=checkbox]),.tc-dialog label>select,.tc-dialog textarea{display:block;width:100%;margin-top:7px}.tc-dialog input[type=checkbox]{width:18px;height:18px;vertical-align:middle}.tc-two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.tc-dialog details{margin:18px 0;padding:12px;border:1px solid #dce1d3;border-radius:12px}.tc-dialog [role=alert]{color:#a4482b;font-size:14px}.tc-slot-options,.tc-more-slots{display:flex;flex-wrap:wrap;gap:6px}.tc-step{padding:15px 0;border-bottom:1px solid #ddd}.tc-step>input:first-child{width:100%}.tc-step input[type=range]{width:100%;padding:0;accent-color:#577854}.tc-step output{display:block;color:#9b6c26;margin:8px}.tc-step input[type=number]{width:95px}.tc-dialog button:disabled{opacity:.5;cursor:wait}@media(max-width:480px){.tc-dialog{padding:16px}.tc-two{grid-template-columns:1fr}.tc-nav button{font-size:12px!important}.tc-surface{padding:12px}.tc-hero h2{font-size:28px}.tc-inbox-row{font-size:14px}}
+
+#taskCenter .tc-hero{display:block;margin:12px 0;gap:0}#taskCenter .tc-hero h2{display:block;width:auto;white-space:nowrap}.wrap:has(#viewTasks.on){max-width:1100px}body:has(#viewTasks.on) .capture-inner{max-width:1060px}
+
+</style>
+<script>
+(function(root){
+'use strict';
+const clone=x=>JSON.parse(JSON.stringify(x));
+const day=(at=Date.now())=>new Date(at+8*3600000).toISOString().slice(0,10);
+const add=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*86400000).toISOString().slice(0,10);
+const diff=(a,b)=>Math.round((Date.parse(a)-Date.parse(b))/86400000);
+const stamp=(d,t)=>Date.parse(d+'T'+t+':00+08:00');
+const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
+const clock=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const id=()=>crypto.randomUUID();
+const initial=[[-28,'確認主題及講者',45],[-24,'完成報名頁',90],[-22,'撰寫宣傳電郵',60],[-22,'準備社交媒體帖文',45],[-22,'準備廣告素材',90],[-20,'啟動廣告及首輪宣傳',30],[-7,'第二輪宣傳及檢查報名',45],[-1,'發送提醒及測試設備',45],[1,'發送重播及跟進電郵',60]];
+function ensure(s){s.tasks=s.tasks||[];s.taskCenter=s.taskCenter||{};const c=s.taskCenter;for(const k of ['projects','templates','history'])c[k]=c[k]||[];c.settings=c.settings||{start:'09:00',end:'18:00',weekends:false};return c;}
+function templates(s){const a=(s.taskCenter||{}).templates;return a&&a.length?a:[{id:'webinar-default',name:'Webinar 起始模板',steps:initial.map((x,i)=>({id:'w'+i,offset:x[0],name:x[1],mins:x[2]}))}];}
+function wanted(t){return (t.tc||{}).wanted||(t.plan||{}).date||t.due||'';}
+function slot(t){return (t.tc||{}).slot||null;}
+function task(s,i){const t=s.tasks.find(t=>t.id===i);if(!t)throw Error('任務已不存在，請重新查看。');return t;}
+function rev(t){return String(t.m||0);}
+function check(t,r){if(r!==undefined&&rev(t)!==String(r))throw Error('另一部裝置已修改這項任務；請重新開啟，避免覆蓋。');}
+function tick(t,now){t.m=Math.max(now,(t.m||0)+1);}
+function dateNext(d,rule,anchor=d){if(rule==='daily')return add(d,1);if(rule==='weekly')return add(d,7);const dt=new Date(d+'T12:00:00Z'),target=dt.getUTCMonth()+1,y=dt.getUTCFullYear();const last=new Date(Date.UTC(y,target+1,0)).getUTCDate();return new Date(Date.UTC(y,target,Math.min(Number(anchor.slice(8)),last),12)).toISOString().slice(0,10);}
+function fresh(s,d,now){const b=(s.meta||{}).taskBusy;return !!(b&&b.ok&&now-Date.parse(b.checkedAt)<45*60000&&d>=b.from&&d<=b.until);}
+function available(s,d,duration,exclude,now=Date.now()){
+ if(!fresh(s,d,now))return {ok:false,slots:[],reason:'日曆未能確認最新狀態，暫不提供空檔。'};
+ const cfg=(s.taskCenter||{}).settings||{start:'09:00',end:'18:00',weekends:false};
+ const wd=new Date(d+'T12:00:00Z').getUTCDay();if(!cfg.weekends&&(wd===0||wd===6))return {ok:true,slots:[],reason:'設定不安排週末。'};
+ let busy=(s.meta.taskBusy.rows||[]).filter(e=>e.d===d).map(e=>[e.allDay?0:mins(e.s),e.allDay?1440:mins(e.e)]);
+ for(const t of s.tasks){const a=slot(t);if(t.id!==exclude&&!(t.tc||{}).archived&&a&&a.d===d)busy.push([mins(a.s),mins(a.e)]);}
+ busy=busy.sort((a,b)=>a[0]-b[0]);let cursor=mins(cfg.start),end=mins(cfg.end),max=0,slots=[];
+ const gap=(a,b)=>{a=Math.max(a,Math.ceil((now-stamp(d,'00:00'))/60000/15)*15);if(b<=a)return;max=Math.max(max,b-a);for(let m=a;m+duration<=b;m+=30)slots.push({d,s:clock(m),e:clock(m+duration)});};
+ for(const [a,b] of busy){if(b<=cursor)continue;gap(cursor,Math.min(a,end));cursor=Math.max(cursor,b);if(cursor>=end)break;}gap(cursor,end);
+ return {ok:true,slots,max,reason:slots.length?'':'當日最長連續空檔 '+max+' 分鐘，放不下 '+duration+' 分鐘任務。'};
+}
+function validSlot(s,a,duration,exclude,now=Date.now()){const cfg=(s.taskCenter||{}).settings||{start:'09:00',end:'18:00',weekends:false};if(!fresh(s,a.d,now)||!Number.isFinite(stamp(a.d,a.s))||stamp(a.d,a.s)<now||mins(a.e)-mins(a.s)!==duration||mins(a.s)<mins(cfg.start)||mins(a.e)>mins(cfg.end))return false;const wd=new Date(a.d+'T12:00:00Z').getUTCDay();if(!cfg.weekends&&(wd===0||wd===6))return false;const rows=(s.meta.taskBusy.rows||[]).filter(x=>x.d===a.d).map(x=>[x.allDay?0:mins(x.s),x.allDay?1440:mins(x.e)]);for(const t of s.tasks){const x=slot(t);if(t.id!==exclude&&!t.tc?.archived&&x?.d===a.d)rows.push([mins(x.s),mins(x.e)]);}return !rows.some(([lo,hi])=>mins(a.s)<hi&&mins(a.e)>lo);}
+function early(t,now){const a=slot(t);if(a){const m=Math.floor((stamp(a.d,a.s)-now)/60000);return m>0?(m>=1440?'提早 '+Math.floor(m/1440)+' 日完成':'提早 '+m+' 分鐘完成'):'';}const d=wanted(t);return d&&diff(d,day(now))>0?'提早 '+diff(d,day(now))+' 日完成':'';}
+function projectPreview(s,pid,date){const p=(s.taskCenter||{}).projects.find(x=>x.id===pid);if(!p)throw Error('專案不存在');const delta=diff(date,p.date);return s.tasks.filter(t=>(t.tc||{}).project===pid).map(t=>{const n=clone(t),c=n.tc||{};if(!t.done){if(n.due)n.due=add(n.due,delta);if(c.wanted)c.wanted=add(c.wanted,delta);if(c.slot&&!c.locked){c.slot.d=add(c.slot.d,delta);c.scheduleStatus='needs';} }return {id:t.id,rev:rev(t),before:t,after:n,warning:!t.done&&c.locked&&c.slot&&n.due&&c.slot.d>n.due?'鎖定時段超過新期限，需自行處理':''};});}
+function apply(s,op,now=Date.now()){
+ const c=ensure(s);if(c.history.some(h=>h.id===op.id))return s;
+ let changes=[],created=[];
+ const edit=(t)=>{changes.push({id:t.id,before:clone(t)});tick(t,now);};
+ if(op.kind==='capture'){s.tasks.unshift({id:op.taskId,text:op.text.trim(),created:day(now),ct:clock(new Date(now+8*3600000).getUTCHours()*60+new Date(now+8*3600000).getUTCMinutes()),done:false,m:now,tc:{inbox:true}});if(!op.text.trim())throw Error('請輸入任務名稱');created.push(op.taskId);}
+ else if(op.kind==='save'){
+  const t=task(s,op.taskId);check(t,op.rev);const v=clone(op.values);if(!v.text.trim()||!(v.mins>0&&v.mins<=1440))throw Error('請輸入任務名稱及1至1440分鐘需時。');
+  if(v.tc.slot){const a=v.tc.slot;if(a.d!==v.tc.wanted||mins(a.e)-mins(a.s)!==v.mins)throw Error('時段或需時已改變，請重新選擇。');const free=available(s,a.d,v.mins,t.id,now);const b=s.meta.taskBusy;if(!b||Date.parse(b.checkedAt)<op.calendarRequest)throw Error('請重新核對日曆。');if(!free.ok||!validSlot(s,a,v.mins,t.id,now))throw Error('時段已被佔用或不符合工作時間，請重新選擇。');if(v.due&&a.d>v.due){if(!op.extendDue)throw Error('所選時段超過期限，請明確選擇延後期限。');v.due=a.d;}}
+  edit(t);Object.assign(t,v);delete t.plan;t.tc.inbox=false;t.tc.scheduleStatus=t.tc.slot?'scheduled':'pending';
+ }
+ else if(op.kind==='skip'||op.kind==='restore'||op.kind==='archive'){
+  const t=task(s,op.taskId);check(t,op.rev);edit(t);t.tc=t.tc||{};t.tc.archived=op.kind!=='restore';
+ }
+ else if(op.kind==='complete'){
+  const t=task(s,op.taskId);check(t,op.rev);if(t.done)throw Error('這項任務已完成。');edit(t);t.done=true;t.doneAt=day(now);t.tc=t.tc||{};t.tc.completedAt=new Date(now).toISOString();t.tc.originalSchedule={slot:slot(t),wanted:wanted(t),due:t.due||''};t.tc.badge=early(t,now);t.tc.completionOp=op.id;
+  if(t.tc.repeat){const anchor=t.tc.occurrence||wanted(t)||day(now),next=dateNext(anchor,t.tc.repeat,t.tc.repeatAnchor||anchor),series=t.tc.series||t.id;t.tc.series=series;t.tc.occurrence=anchor;t.tc.repeatAnchor=t.tc.repeatAnchor||anchor;const nid='repeat-'+series+'-'+next;
+   if(!s.tasks.some(x=>x.id===nid)){const n=clone(t);n.id=nid;n.done=false;n.doneAt=null;n.created=day(now);n.m=now;n.tc={...n.tc,slot:null,wanted:next,occurrence:next,status:'todo',inbox:false};delete n.tc.completedAt;delete n.tc.originalSchedule;delete n.tc.badge;delete n.tc.completionOp;if(n.due)n.due=add(n.due,diff(next,anchor));s.tasks.push(n);s.tomb=(s.tomb||[]).filter(x=>x.id!==nid);created.push(nid);}}
+ }
+ else if(op.kind==='reopen'){const t=task(s,op.taskId);check(t,op.rev);edit(t);t.done=false;t.doneAt=null;t.tc=t.tc||{};delete t.tc.completedAt;delete t.tc.badge;delete t.tc.completionOp;}
+ else if(op.kind==='undo'){
+  const h=c.history.find(x=>x.id===op.target&&!x.undone);if(!h)throw Error('找不到可復原的操作。');
+  for(const x of h.changed){check(task(s,x.id),x.afterRev);}
+  for(const x of h.changed){const i=s.tasks.findIndex(t=>t.id===x.id);s.tasks[i]=clone(x.before);tick(s.tasks[i],now);}
+  for(const i of h.created||[]){const t=s.tasks.find(x=>x.id===i);if(t&&rev(t)===String(h.at)){s.tasks=s.tasks.filter(x=>x.id!==i);s.tomb=s.tomb||[];s.tomb.push({id:i,t:now});}}
+  h.undone=true;
+ }
+ else if(op.kind==='settings'){if(mins(op.value.start)>=mins(op.value.end))throw Error('結束時間必須晚於開始。');c.settings=clone(op.value);}
+ else if(op.kind==='template'){const existing=c.templates.find(x=>x.id===op.value.id);if(existing&&existing.m!==op.rev)throw Error('模板已被修改，請重新開啟。');const v=clone(op.value);if(!v.name.trim()||!v.steps.length||v.steps.some(x=>!x.name.trim()||!Number.isInteger(x.offset)||!(x.mins>0&&x.mins<=1440)))throw Error('請填齊模板名稱、步驟及需時。');v.m=now;c.templates=c.templates.filter(x=>x.id!==v.id).concat(v);}
+ else if(op.kind==='project'){
+  if(!op.name.trim()||!op.date)throw Error('請填專案名稱及目標日期');if(c.projects.some(p=>p.id===op.projectId))return s;
+  c.projects.push({id:op.projectId,name:op.name.trim(),date:op.date,m:now});let steps=op.steps||[];
+  steps.forEach((step,i)=>{const tid=op.projectId+'-'+i;s.tasks.push({id:tid,text:step.name,mins:step.mins,due:add(op.date,step.offset),done:false,created:day(now),m:now,tc:{project:op.projectId,order:i,wanted:'',status:'todo',inbox:false}});created.push(tid);});
+ }
+ else if(op.kind==='moveProject'){
+  const p=c.projects.find(p=>p.id===op.projectId);if(!p||p.m!==op.rev)throw Error('專案已修改，請重新預覽。');
+  const preview=projectPreview(s,p.id,op.date);for(const x of preview){if(op.taskRevs[x.id]!==rev(x.before))throw Error('任務已修改，請重新預覽。');if(x.before.done)continue;edit(x.before);const i=s.tasks.findIndex(t=>t.id===x.id);s.tasks[i]=x.after;tick(s.tasks[i],now);if(slot(s.tasks[i])&&!s.tasks[i].tc.locked){s.tasks[i].tc.slot=null;s.tasks[i].tc.scheduleStatus='needs';}}
+  p.date=op.date;p.m=now;
+ }
+ else if(op.kind==='order'){const t=task(s,op.taskId);check(t,op.rev);const ts=s.tasks.filter(x=>x.tc?.project===t.tc?.project&&!x.tc?.archived).sort((a,b)=>(a.tc.order||0)-(b.tc.order||0));for(const x of ts)check(x,op.revs[x.id]);const i=ts.indexOf(t),j=i+op.direction;if(j>=0&&j<ts.length){[ts[i],ts[j]]=[ts[j],ts[i]];ts.forEach((x,n)=>{edit(x);x.tc.order=n;});}}
+ else if(op.kind==='calendar'){c.calendarRequest={id:op.id,at:new Date(now).toISOString()};}
+ else throw Error('未知操作');
+ c.history.push({id:op.id,kind:op.kind,at:now,changed:changes.map(x=>({...x,afterRev:rev(task(s,x.id))})),created});
+ return s;
+}
+root.TaskCore={clone,day,add,diff,stamp,mins,clock,id,ensure,templates,wanted,slot,task,rev,fresh,available,validSlot,early,projectPreview,apply};
+if(typeof module!=='undefined')module.exports=root.TaskCore;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script><script>
+(function(){
+'use strict';const C=TaskCore;let api,root,view='inbox',project='',week=0,mode='week',filter='open',query='',modal=null,calendarBusy=false,busy=false,message='',undoId='',completedDay=C.day();
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const btn=(label,act,extra='')=>`<button type="button" data-tc="${act}" ${extra}>${label}</button>`;
+const opt=(v,label,cur)=>`<option value="${esc(v)}" ${v===cur?'selected':''}>${esc(label)}</option>`;
+const state=()=>api.state();
+const data=()=>state().taskCenter||{};
+const visible=()=>state().tasks.filter(t=>!(t.tc||{}).archived);
+const weekday=d=>'星期'+'日一二三四五六'[new Date(d+'T12:00:00Z').getUTCDay()];
+const dateLabel=d=>d?`${Number(d.slice(5,7))}月${Number(d.slice(8))}日 ${weekday(d)}${d===C.day()?' · 今日':''}`:'未定日期';
+const status=t=>t.tc?.scheduleStatus==='needs'?'需要改期':({blocked:'卡住',waiting:'等人回覆',needs:'需要改期'}[(t.tc||{}).status]||'');
+function row(t){const c=t.tc||{},a=C.slot(t);return `<div class="tc-row ${t.done?'tc-done':''}"><button class="tc-tick" data-tc="${t.done?'reopen':'complete'}" data-id="${esc(t.id)}" aria-label="${t.done?'復原':'完成'}：${esc(t.text)}" ${busy?'disabled':''}>${t.done?'✓':'○'}</button><button class="tc-title" data-tc="edit" data-id="${esc(t.id)}">${esc(t.text)}<small>${a?esc(a.s+'–'+a.e)+' · ':''}${t.mins?Number(t.mins)+'分鐘':''}${status(t)?' · '+status(t):''}${c.badge?' · ✦ '+esc(c.badge):''}</small></button></div>`;}
+function groups(tasks){const m={};tasks.forEach(t=>{const d=C.wanted(t);(m[d]??=[]).push(t);});return Object.keys(m).sort((a,b)=>(a||'z').localeCompare(b||'z')).map(d=>`<h3>${dateLabel(d)}</h3>${m[d].map(row).join('')}`).join('')||'<p class="tc-empty">沒有符合的任務。</p>';}
+function render(){if(!root||!state()||modal||(!busy&&root.contains(document.activeElement)&&document.activeElement.matches('input:not(#tcSearch)')))return;const s=state(),today=C.day();const p=(data().projects||[]).find(p=>p.id===project);let body='';
+ if(view==='inbox'){
+ const notes=visible().filter(t=>!t.done&&((t.tc||{}).inbox===true||(!t.tc&&!t.due&&!t.plan)));
+ const note=t=>`<div class="tc-inbox-row"><span>${esc(t.text)}</span>${btn('整理','edit',`data-id="${esc(t.id)}"`)}${btn('略過','skip',`data-id="${esc(t.id)}"`)}</div>`;
+ const pending=visible().filter(t=>!t.done&&!(t.tc||{}).inbox&&!C.slot(t));
+ const todayTasks=visible().filter(t=>!t.done&&C.wanted(t)===today).sort((a,b)=>(C.slot(a)?.s||'99').localeCompare(C.slot(b)?.s||'99'));
+ const done=visible().filter(t=>t.done&&((t.tc||{}).completedAt?C.day(Date.parse(t.tc.completedAt)):t.doneAt)===completedDay);
+ body=`<header class="tc-hero"><div class="tc-eyebrow">先記下，再安排</div><h2>任務收集</h2><p>只需要一句話，其餘稍後整理。</p></header><form id="tcCapture"><input name="text" aria-label="記下事情" placeholder="想到甚麼，先寫下…" required maxlength="500"><button>＋記下</button></form><div class="tc-surface">${notes.slice(0,4).map(note).join('')||'<p class="tc-empty">暫時沒有待整理記錄。</p>'}${notes.length>4?`<details><summary>其餘 ${notes.length-4} 項記錄</summary>${notes.slice(4).map(note).join('')}</details>`:''}</div><p>${btn(pending.length+' 項任務待安排 · 到時間表找空檔 →','view',`data-view="schedule"`)}</p><details class="tc-surface"><summary>今日專注 <span>${todayTasks.length}</span></summary>${todayTasks[0]?row(todayTasks[0]):'<p>今日未有待辦。</p>'}${todayTasks.length>1?`<details><summary>其他今日任務 ${todayTasks.length-1} 項</summary>${todayTasks.slice(1).map(row).join('')}</details>`:''}</details><details class="tc-surface"><summary>完成紀錄</summary><label>實際完成日期 <input type="date" id="tcDoneDay" value="${completedDay}"></label>${done.map(row).join('')||'<p>這一天未有完成紀錄。</p>'}</details><details class="tc-surface"><summary>略過／已移除的記錄</summary>${s.tasks.filter(t=>(t.tc||{}).archived).map(t=>`<div class="tc-inbox-row">${esc(t.text)}${btn('找回','restore',`data-id="${esc(t.id)}"`)}</div>`).join('')||'<p>沒有記錄。</p>'}</details>`;
+ }else if(view==='schedule'){
+ body=`<div class="tc-heading"><h2>時間表</h2>${btn('工作時間設定','settings')}</div><div class="tc-switch">${btn('時間表','mode','data-mode="week" aria-pressed="'+(mode==='week')+'"')}${btn('所有任務','mode','data-mode="all" aria-pressed="'+(mode==='all')+'"')}</div>`;
+ if(mode==='all')body+=`<div class="tc-tools"><input id="tcSearch" placeholder="搜尋任務名稱" aria-label="搜尋任務" value="${esc(query)}"><select id="tcFilter">${opt('all','全部',filter)}${opt('open','未完成',filter)}${opt('done','已完成',filter)}</select></div>`+groups(visible().filter(t=>t.text.toLowerCase().includes(query.toLowerCase())&&(filter==='all'||(filter==='done')===!!t.done)));
+ else{
+ let wd=new Date(today+'T12:00:00Z').getUTCDay();const start=C.add(today,-((wd+6)%7)+week*7),days=Array.from({length:7},(_,i)=>C.add(start,i));
+ const cfg=data().settings||{start:'09:00',end:'18:00'},lo=Math.min(8*60,C.mins(cfg.start)),hi=Math.max(20*60,C.mins(cfg.end));
+ body+=`<div class="tc-switch">${btn('本週','week','data-week="0" aria-pressed="'+(week===0)+'"')}${btn('下週','week','data-week="1" aria-pressed="'+(week===1)+'"')}</div><p class="tc-hint">綠色：任務工作時段　灰色：日曆忙碌時段。個人行程只顯示忙碌。</p>${!C.fresh(s,today,Date.now())?'<p class="tc-warning">日曆資料未確認最新；現有時段僅供參考，安排前會重新核對。</p>':''}<div class="tc-calendar-scroll"><div class="tc-calendar"><div class="tc-hours"><div class="tc-day-head">HKT</div>${Array.from({length:(hi-lo)/30},(_,i)=>`<div style="height:30px">${i%2===0?C.clock(lo+i*30):''}</div>`).join('')}</div>${days.map(d=>`<div class="tc-day ${d===today?'tc-today':''}"><div class="tc-day-head">${dateLabel(d)}</div><div class="tc-day-body" style="height:${hi-lo}px">${(s.meta?.taskBusy?.rows||[]).filter(e=>e.d===d).map(e=>{const st=e.allDay?lo:Math.max(lo,C.mins(e.s)),en=e.allDay?hi:Math.min(hi,C.mins(e.e));return en>st?`<div class="tc-busy" style="top:${st-lo}px;height:${en-st}px">日曆忙碌</div>`:'';}).join('')}${visible().filter(t=>C.slot(t)?.d===d).map(t=>{const a=C.slot(t),st=C.mins(a.s);return `<div class="tc-block ${t.done?'tc-done':''}" style="top:${Math.max(0,st-lo)}px;min-height:${Math.max(28,C.mins(a.e)-st)}px">${row(t)}</div>`;}).join('')}</div></div>`).join('')}</div></div>`;
+ const pending=visible().filter(t=>!t.done&&(!C.slot(t)||status(t)||C.slot(t).d<today));
+ const over=pending.filter(t=>(t.due&&t.due<today)||(C.wanted(t)&&C.wanted(t)<today));body+=`<h3>逾期／需要跟進</h3>${over.map(row).join('')||'<p class="tc-empty">沒有逾期項目。</p>'}<h3>未來14日 · 待安排及需處理</h3>`;
+ body+=Array.from({length:14},(_,i)=>{const d=C.add(today,i),ts=pending.filter(t=>C.wanted(t)===d&&!over.includes(t));return `<section class="tc-date-group"><h4>${dateLabel(d)}</h4>${ts.map(row).join('')||'<p class="tc-empty">沒有待安排工作</p>'}</section>`;}).join('');body+=`<details><summary>未定日期</summary>${pending.filter(t=>!C.wanted(t)).map(row).join('')}</details>`;
+ }
+ }else if(view==='projects'){
+ if(!p)body=`<div class="tc-heading"><h2>專案</h2>${btn('＋建立專案','newProject')}</div>`+(data().projects||[]).map(p=>{const ts=visible().filter(t=>t.tc?.project===p.id),done=ts.filter(t=>t.done).length;return `<button class="tc-project" data-tc="project" data-id="${p.id}"><strong>${esc(p.name)}</strong><small>${dateLabel(p.date)} · ${done}/${ts.length} 完成</small><progress value="${done}" max="${ts.length||1}"></progress></button>`;}).join('');
+ else {const ts=visible().filter(t=>t.tc?.project===p.id).sort((a,b)=>(a.tc.order||0)-(b.tc.order||0));const n=ts.filter(t=>t.done).length;body=`${btn('← 所有專案','view','data-view="projects"')}<h2>${esc(p.name)}</h2><p>${dateLabel(p.date)} · ${n}/${ts.length} 完成 · ${Math.round(n/(ts.length||1)*100)}%</p><progress value="${n}" max="${ts.length||1}"></progress><p>下一步：${esc(ts.find(t=>!t.done)?.text||'全部已完成')}</p><div class="tc-tools">${btn('＋新增任務','projectTask')}${btn('活動改期','moveProject')}${btn('另存為新版模板','fromProject')}</div>${ts.map((t,i)=>`<div class="tc-project-task">${row(t)}<small>${esc(t.tc.owner||'未指定負責人')} · 期限 ${esc(t.due||'未定')} ${t.tc.locked?'· 時段已鎖定':''}</small><div>${btn('上移','order',`data-id="${t.id}" data-order="-1"`)}${btn('下移','order',`data-id="${t.id}" data-order="1"`)}${btn('移除','archive',`data-id="${t.id}"`)}</div></div>`).join('')}`;}
+ }else{body=`<div class="tc-heading"><h2>模板庫</h2>${btn('＋新模板','newTemplate')}</div><p class="tc-hint">調整流程只會影響之後建立的專案。</p>`+C.templates(s).map(t=>`<div class="tc-surface"><h3>${esc(t.name)}</h3><p>${t.steps.length} 個步驟</p>${btn('編輯時間線','template',`data-id="${t.id}"`)}${btn('套用模板','useTemplate',`data-id="${t.id}"`)}</div>`).join('');}
+ root.innerHTML=`<div class="tc-crumb">戰略中心 › ${btn('任務中心','view','data-view="inbox"')} › ${esc({inbox:'任務收集',schedule:'時間表',projects:p?'專案 › '+p.name:'專案',templates:'模板庫'}[view])}</div><nav class="tc-nav">${[['inbox','任務收集'],['schedule','時間表'],['projects','專案'],['templates','模板庫']].map(([v,l])=>btn(l,'view',`data-view="${v}" aria-current="${view===v?'page':'false'}"`)).join('')}</nav><div class="tc-actions">${btn('＋隨手記','quick')}${busy?'<span>正在同步，請稍候…</span>':''}</div><div role="status" class="tc-message">${esc(message)}${undoId?btn('復原','undo'):''}</div>${body}`;
+}
+async function commit(op){if(busy)throw Error('正在同步，請稍候');busy=true;message='正在儲存至共用資料庫…';render();try{await api.commit({...op,id:op.id||C.id()});message='已儲存，另一部裝置會同步更新。';return true;}catch(e){message=e.message||'儲存失敗，未顯示為完成。';throw e;}finally{busy=false;render();}}
+function show(html){modal=document.createElement('dialog');modal.className='tc-dialog';modal.innerHTML=html;document.body.append(modal);modal.addEventListener('cancel',e=>{if(busy||calendarBusy)e.preventDefault();else close();});modal.showModal();}
+function close(){if(modal){modal.remove();modal=null;}render();}
+function field(label,html){return `<label>${label}${html}</label>`;}
+async function calendar(){if(calendarBusy)throw Error('正在核對日曆，請稍候');calendarBusy=true;const controls=modal?[...modal.querySelectorAll('button')]:[];controls.forEach(b=>b.disabled=true);try{const at=Date.now();await commit({kind:'calendar'});const end=Date.now()+90000;while(Date.now()<end){await api.reload();const b=state().meta?.taskBusy;if(b&&Date.parse(b.checkedAt)>=at){if(b.ok)return at;throw Error('日曆暫時讀取失敗，未提供空檔。請先儲存待安排。');}await new Promise(r=>setTimeout(r,2500));}throw Error('日曆未能即時核對（電腦或同步服務可能未連線）。請先儲存待安排，稍後再試。');}finally{calendarBusy=false;controls.forEach(b=>b.disabled=false);}}
+function edit(t){const c=t.tc||{},a=C.slot(t),rev=C.rev(t);let selection=a?C.clone(a):null,calendarRequest=0,checked=false;
+ show(`<form id="tcEdit"><h2>整理／安排任務</h2>${t.fid?'<p class="tc-hint">原資料夾：'+esc((state().folders||[]).find(f=>f.id===t.fid)?.name||t.fid)+'</p>':''}${field('任務名稱',`<input name="text" required maxlength="500" value="${esc(t.text)}">`)}<div class="tc-two">${field('想在哪一天做',`<input name="wanted" type="date" value="${esc(C.wanted(t))}">`)}${field('需時（分鐘）',`<input name="mins" type="number" min="1" max="1440" value="${Number(t.mins)||30}" required>`)}</div><button type="button" id="tcFind">核對日曆並找空檔</button><div id="tcSlots"><p>${a?'現有安排：'+esc(a.d+' '+a.s+'–'+a.e):'未選工作時段。可以先儲存待安排。'}</p></div><details><summary>其他資料</summary><div class="tc-two">${field('完成期限',`<input name="due" type="date" value="${esc(t.due||'')}">`)}${field('所屬專案',`<select name="project">${opt('','獨立工作',c.project||'')}${(data().projects||[]).map(p=>opt(p.id,p.name,c.project)).join('')}</select>`)}${field('負責人',`<select name="owner">${['','曉明','Franki'].map(x=>opt(x,x||'未指定',c.owner||'')).join('')}</select>`)}${field('狀態',`<select name="status">${[['todo','待辦'],['blocked','卡住'],['waiting','等人回覆']].map(([v,l])=>opt(v,l,c.status||'todo')).join('')}</select>`)}${field('恆常工作',`<select name="repeat">${[['','不重複'],['daily','每日'],['weekly','每週'],['monthly','每月']].map(([v,l])=>opt(v,l,c.repeat||'')).join('')}</select>`)}${field('手動開始時間',`<input name="manualTime" type="time" value="">`)}</div><label><input type="checkbox" name="locked" ${c.locked?'checked':''}> 鎖定已選時段</label>${field('備註',`<textarea name="notes">${esc(c.notes||'')}</textarea>`)}${field('文件連結（https）',`<input name="url" type="url" value="${esc(c.url||'')}">`)}${c.url&&/^https?:\/\//.test(c.url)?`<a href="${esc(c.url)}" target="_blank" rel="noopener">開啟文件 ↗</a>`:''}</details><label><input name="extend" type="checkbox"> 若所選時段超過期限，同時延後期限至該日</label><p id="tcEditError" role="alert"></p><div class="tc-tools"><button type="submit" name="save" value="schedule">確認安排</button><button type="submit" name="save" value="pending">儲存待安排任務</button><button type="button" id="tcCancel">取消</button></div><p class="tc-hint">工作時段保存在共用任務中心；不會擅自建立或更改 Google 日曆事件。</p></form>`);
+ const form=modal.querySelector('form'),error=modal.querySelector('#tcEditError'),slots=modal.querySelector('#tcSlots');
+ form.wanted.onchange=form.mins.oninput=()=>{selection=null;checked=false;slots.textContent='日期或需時已改變，請重新找空檔。';};
+ form.manualTime.onchange=()=>{selection=null;checked=false;slots.textContent='手動時間會在確認前核對，不能覆蓋忙碌行程。';};
+ modal.querySelector('#tcCancel').onclick=()=>{if(!busy)close();};
+ modal.querySelector('#tcFind').onclick=async()=>{const b=modal.querySelector('#tcFind');b.disabled=true;error.textContent='正在讀取最新 Google 日曆忙碌時段…';try{calendarRequest=await calendar();const d=form.wanted.value;if(!d)throw Error('請先選想做日期。');const n=Number(form.mins.value);let r=C.available(state(),d,n,t.id);let all=r.slots.slice(0,6);let more=r.slots.slice(6);let reason=r.reason;if(!all.length){let found=0;for(let i=1;i<=14&&found<3;i++){const q=C.available(state(),C.add(d,i),n,t.id);if(q.slots.length){all.push(q.slots[0]);found++;}}}slots.innerHTML=`<p>${esc(reason)}</p><div class="tc-slot-options"></div>${more.length?'<details><summary>其他時段</summary><div class="tc-more-slots"></div></details>':''}`;function fill(target,arr){for(const a of arr){const el=document.createElement('button');el.type='button';el.textContent=dateLabel(a.d)+' '+a.s+'–'+a.e;el.onclick=()=>{selection=a;form.wanted.value=a.d;checked=true;slots.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');};target.append(el);}}fill(slots.querySelector('.tc-slot-options'),all);if(more.length)fill(slots.querySelector('.tc-more-slots'),more);error.textContent=all.length?'請選一個完整時段。':'未找到合適空檔，可先儲存待安排任務。';}catch(e){error.textContent=e.message;}finally{b.disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();if(busy)return;try{const arrange=e.submitter?.value==='schedule';if(arrange){if(form.manualTime.value){const st=C.mins(form.manualTime.value);selection={d:form.wanted.value,s:form.manualTime.value,e:C.clock(st+Number(form.mins.value))};}if(!selection)throw Error('請先選工作時段，或選「儲存待安排任務」。');error.textContent='確認前重新核對日曆，請稍候…';calendarRequest=await calendar();}
+ const url=form.url.value.trim();if(url&&!/^https:\/\//.test(url))throw Error('文件連結請使用 https://');
+ await commit({kind:'save',taskId:t.id,rev,calendarRequest,extendDue:form.extend.checked,values:{text:form.text.value,mins:Number(form.mins.value),due:form.due.value,tc:{...c,inbox:false,wanted:form.wanted.value,slot:arrange?selection:null,project:form.project.value,owner:form.owner.value,status:form.status.value,repeat:form.repeat.value,locked:form.locked.checked,notes:form.notes.value,url}}});close();}catch(e){error.textContent=e.message;}};
+}
+function quick(prefill=''){show(`<form id="tcQuick"><h2>隨手記</h2><input name="text" aria-label="隨手記內容" placeholder="只需要一句話" value="${esc(prefill)}" required maxlength="500"><p role="alert"></p><div class="tc-tools"><button>記下</button><button type="button" data-close>取消</button></div></form>`);modal.querySelector('[data-close]').onclick=close;modal.querySelector('form').onsubmit=async e=>{e.preventDefault();try{await commit({kind:'capture',taskId:C.id(),text:e.target.text.value});close();}catch(x){modal.querySelector('p').textContent=x.message;}};}
+function newProject(templateId){show(`<form><h2>建立專案</h2>${field('專案名稱','<input name="name" required>')}${field('活動／目標日期','<input type="date" name="date" required>')}${field('套用模板',`<select name="template">${opt('','不套用模板',templateId||'')}${C.templates(state()).map(t=>opt(t.id,t.name,templateId)).join('')}</select>`)}<p role="alert"></p><button>建立</button> <button type="button" data-close>取消</button></form>`);modal.querySelector('[data-close]').onclick=close;modal.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=e.target,pid=C.id();try{await commit({kind:'project',projectId:pid,name:f.elements.namedItem("name").value,date:f.date.value,steps:C.templates(state()).find(t=>t.id===f.template.value)?.steps||[]});project=pid;view='projects';close();}catch(x){modal.querySelector('p').textContent=x.message;}};}
+function templateEdit(t){const value=C.clone(t||{id:C.id(),name:'',steps:[]}),rev=t?.m;show(`<form><h2>模板時間線</h2>${field('模板名稱',`<input name="name" value="${esc(value.name)}" required>`)}<div id="tcSteps"></div><button type="button" id="tcAddStep">＋加一步</button><p role="alert"></p><div class="tc-tools"><button>儲存模板</button><button type="button" data-close>取消</button></div></form>`);const steps=modal.querySelector('#tcSteps');function draw(){steps.innerHTML=value.steps.map((s,i)=>`<div class="tc-step"><input aria-label="步驟名稱" data-i="${i}" data-k="name" value="${esc(s.name)}"><label>需時 <input type="number" min="1" max="1440" data-i="${i}" data-k="mins" value="${s.mins}"> 分鐘</label><input aria-label="調整相對日期" type="range" min="${Math.min(-60,s.offset)}" max="${Math.max(30,s.offset)}" value="${s.offset}" data-i="${i}" data-k="range"><output>${s.offset<0?'活動前 '+(-s.offset)+' 日':s.offset>0?'活動後 '+s.offset+' 日':'活動當日'}</output><div><select data-i="${i}" data-k="direction">${opt('before','活動前',s.offset<=0?'before':'after')}${opt('after','活動後',s.offset>0?'after':'before')}</select><input aria-label="相隔日數" type="number" min="0" value="${Math.abs(s.offset)}" data-i="${i}" data-k="days"> 日 <button type="button" data-remove="${i}">移除步驟</button></div></div>`).join('');}draw();steps.oninput=e=>{const i=Number(e.target.dataset.i),k=e.target.dataset.k,s=value.steps[i];if(!s)return;if(k==='name')s.name=e.target.value;else if(k==='mins')s.mins=Number(e.target.value);else{if(k==='range')s.offset=Number(e.target.value);if(k==='days')s.offset=(e.target.parentElement.querySelector('select').value==='before'?-1:1)*Number(e.target.value);if(k==='direction')s.offset=(e.target.value==='before'?-1:1)*Math.abs(s.offset);const o=e.target.closest('.tc-step').querySelector('output');o.textContent=s.offset<0?'活動前 '+(-s.offset)+' 日':s.offset>0?'活動後 '+s.offset+' 日':'活動當日';}};steps.onclick=e=>{if(e.target.dataset.remove!==undefined){value.steps.splice(Number(e.target.dataset.remove),1);draw();}};modal.querySelector('#tcAddStep').onclick=()=>{value.steps.push({id:C.id(),name:'新步驟',offset:0,mins:30});draw();};modal.querySelector('[data-close]').onclick=close;modal.querySelector('form').onsubmit=async e=>{e.preventDefault();value.name=e.target.elements.namedItem("name").value;try{await commit({kind:'template',value,rev});close();}catch(x){modal.querySelector('[role=alert]').textContent=x.message;}};}
+function moveProject(){const p=data().projects.find(p=>p.id===project);let preview=null,newDate='';show(`<form><h2>活動改期</h2>${field('新活動日期',`<input type="date" name="date" value="${p.date}" required>`)}<button type="button" id="tcPreview">預覽受影響工作</button><div id="tcChanges"></div><p class="tc-hint">已完成工作不改；鎖定時段保留。其他工作解除舊時段，按新日期重新找空檔。</p><p role="alert"></p><button>採用改期</button> <button type="button" data-close>取消</button></form>`);const f=modal.querySelector('form');f.date.onchange=()=>{preview=null;modal.querySelector('#tcChanges').innerHTML='請重新預覽。';};modal.querySelector('#tcPreview').onclick=()=>{newDate=f.date.value;preview=C.projectPreview(state(),project,newDate);modal.querySelector('#tcChanges').innerHTML=preview.map(x=>`<p>${esc(x.before.text)}：${x.before.done?'已完成，保持不變':esc((x.before.due||'未定')+' → '+(x.after.due||'未定'))}${x.before.tc?.locked?' · 鎖定時段保留':''}${x.warning?' · ⚠ '+esc(x.warning):''}</p>`).join('');};modal.querySelector('[data-close]').onclick=close;f.onsubmit=async e=>{e.preventDefault();try{if(!preview)throw Error('請先預覽');await commit({kind:'moveProject',projectId:project,date:newDate,rev:p.m,taskRevs:Object.fromEntries(preview.map(x=>[x.id,x.rev]))});close();}catch(x){modal.querySelector('[role=alert]').textContent=x.message;}};}
+async function action(e){const b=e.target.closest('[data-tc]');if(!b||busy)return;const a=b.dataset.tc,i=b.dataset.id;try{
+ if(a==='view'){view=b.dataset.view;project='';render();}else if(a==='quick')quick();else if(a==='edit')edit(C.task(state(),i));else if(a==='mode'){mode=b.dataset.mode;render();}else if(a==='week'){week=Number(b.dataset.week);render();}
+ else if(a==='skip'||a==='restore'||a==='archive'){if(a==='archive'&&!confirm('移除此任務？之後可在任務收集的「略過／已移除」找回。'))return;await commit({kind:a,taskId:i,rev:C.rev(C.task(state(),i))});}
+ else if(a==='complete'){const t=C.task(state(),i),badge=C.early(t,Date.now()),opid=C.id();await commit({id:opid,kind:'complete',taskId:i,rev:C.rev(t)});undoId=opid;message=badge?'✦ 任務解鎖！'+badge:'已完成，已記入今日成果。';render();}
+ else if(a==='reopen'){const t=C.task(state(),i);if(t.tc?.completionOp)await commit({kind:'undo',target:t.tc.completionOp});else await commit({kind:'reopen',taskId:t.id,rev:C.rev(t)});undoId='';render();}
+ else if(a==='undo'){await commit({kind:'undo',target:undoId});undoId='';render();}
+ else if(a==='newProject')newProject();else if(a==='useTemplate')newProject(i);else if(a==='project'){project=i;view='projects';render();}
+ else if(a==='projectTask'){const tid=C.id();await commit({kind:'capture',taskId:tid,text:'新任務'});const t=C.clone(C.task(state(),tid));t.tc.project=project;edit(t);}
+ else if(a==='newTemplate')templateEdit();else if(a==='template')templateEdit(C.templates(state()).find(t=>t.id===i));
+ else if(a==='fromProject'){const p=data().projects.find(p=>p.id===project);templateEdit({id:C.id(),name:p.name+' · 改良版',steps:visible().filter(t=>t.tc?.project===project).map(t=>({id:C.id(),name:t.text,mins:t.mins||30,offset:t.due?C.diff(t.due,p.date):0}))});}
+ else if(a==='moveProject')moveProject();else if(a==='order')await commit({kind:'order',taskId:i,rev:C.rev(C.task(state(),i)),direction:Number(b.dataset.order),revs:Object.fromEntries(visible().filter(t=>t.tc?.project===project).map(t=>[t.id,C.rev(t)]))});
+ else if(a==='settings'){const cfg=data().settings||{start:'09:00',end:'18:00',weekends:false};show(`<form><h2>工作時間</h2>${field('開始',`<input type="time" name="start" value="${cfg.start}" required>`)}${field('結束',`<input type="time" name="end" value="${cfg.end}" required>`)}<label><input type="checkbox" name="weekends" ${cfg.weekends?'checked':''}> 週末也提供安排建議</label><p role="alert"></p><button>儲存</button> <button type="button" data-close>取消</button></form>`);modal.querySelector('[data-close]').onclick=close;modal.querySelector('form').onsubmit=async e=>{e.preventDefault();try{await commit({kind:'settings',value:{start:e.target.start.value,end:e.target.end.value,weekends:e.target.weekends.checked}});close();}catch(x){modal.querySelector('p').textContent=x.message;}};}
+ }catch(x){message=x.message;render();}}
+window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id='taskCenter';document.getElementById('viewTasks').prepend(root);root.onclick=action;root.addEventListener('submit',async e=>{if(e.target.id!=='tcCapture')return;e.preventDefault();const text=e.target.text.value;try{await commit({kind:'capture',taskId:C.id(),text});}catch{const input=root.querySelector('#tcCapture input');if(input)input.value=text;};});root.onchange=e=>{if(e.target.id==='tcFilter'){filter=e.target.value;render();}if(e.target.id==='tcDoneDay'){completedDay=e.target.value;render();}};root.oninput=e=>{if(e.target.id==='tcSearch'){query=e.target.value;const pos=e.target.selectionStart;render();const q=root.querySelector('#tcSearch');q.focus();q.setSelectionRange(pos,pos);}};setInterval(()=>{if(!document.hidden&&a.active())render();},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});},render,open(v='inbox'){view=v;project='';render();},quick};
+})();
+
+</script></head>
 <body>
 <div class="wrap">
   <header>
@@ -533,7 +698,7 @@
 
   <div class="tabs">
     <button class="tab" data-view="sched" id="tabSched">時間表</button>
-    <button class="tab" data-view="tasks" id="tabTasks">任務</button>
+    <button class="tab" data-view="tasks" id="tabTasks">任務中心</button>
     <button class="tab" data-view="notes" id="tabNotes">情報</button>
     <button class="tab" data-view="social" id="tabSocial">社群</button>
     <button class="tab" data-view="money" id="tabMoney">資金</button>
@@ -732,7 +897,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v10.9</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v11.0</span></div>
 </div>
 
 <div class="capture">
@@ -841,6 +1006,7 @@
                done:['viewDone', null], money:['viewMoney','tabMoney'], ads:['viewAds','tabAds'],
                leads:['viewLeads','tabLeads'], sm:['viewSM','tabSM'], wb:['viewWb','tabWb'], emails:['viewEmails','tabEmails']};
   function setView(v){
+    if(v==='sched'){v='tasks'; if(window.WBHTaskUI) WBHTaskUI.open('schedule');}
     Object.keys(VIEWS).forEach(function(k){
       $(VIEWS[k][0]).classList.toggle('on', k===v);
       var tb = VIEWS[k][1];
@@ -855,7 +1021,7 @@
     try{ localStorage.setItem('view', v); }catch(e){}
   }
   $('tabSched').addEventListener('click', function(){ setView('sched'); });
-  $('tabTasks').addEventListener('click', function(){ setView('tasks'); });
+  $('tabTasks').addEventListener('click', function(){ WBHTaskUI.open('inbox'); setView('tasks'); });
   $('tabNotes').addEventListener('click', function(){ setView('notes'); });
   $('tabSocial').addEventListener('click', function(){ setView('social'); });
   $('tabMoney').addEventListener('click', function(){ setView('money'); renderMoney(); });
@@ -1919,6 +2085,7 @@
   }
   function render(){
     if(!state) return;
+    if(window.WBHTaskUI) WBHTaskUI.render();
     var now = new Date();
     var today = localDateStr(now);
     $('dateLine').innerHTML = fmtHeader();
@@ -2303,7 +2470,7 @@
 
   // 🔴 ads／intel 由後台寫，app 寫入前要先攞返最新，唔好用手上舊嘅冚走佢
   function persist(){
-    if(!state || persistBusy) return;
+    if(!state || persistBusy || tcCommitBusy) return;
     persistBusy = true;
     fetchBoard(function(row, reached){
       if(row && row.state){ state = mergeRemote(state, row.state); baseTs = row.updated_at || null; }
@@ -2417,7 +2584,7 @@
         if(tombIds[lt.id]) return;                       // 對方部機刪咗＝真係要走，唔好翻生
         merged.push(lt); return;                         // 否則＝本機新加，後台未見到，保留
       }
-      var pick = (rt.m && lt.m && rt.m > lt.m) ? JSON.parse(JSON.stringify(rt)) : JSON.parse(JSON.stringify(lt));
+      var pick = ((rt.m || 0) > (lt.m || 0)) ? JSON.parse(JSON.stringify(rt)) : JSON.parse(JSON.stringify(lt));
       // Eva 推進咗嘅狀態一律吸收（唔好俾手上舊 pending 冚返轉頭）
       if(rt.plan && rt.plan.status === 'added' && pick.plan && pick.plan.status === 'pending' && rt.plan.date === pick.plan.date) pick.plan = rt.plan;
       if(rt.ming && rt.ming.status === 'sent' && pick.ming && pick.ming.status === 'pending') pick.ming = rt.ming;
@@ -2757,6 +2924,7 @@
 
   function addTask(){
     if(!state) return;
+    if(curView==='tasks'){ WBHTaskUI.quick($('captureInput').value); $('captureInput').value=''; return; }
     var input = $('captureInput');
     var text = input.value.trim();
     if(!text) return;
@@ -2780,14 +2948,35 @@
     if(draft) $('captureInput').value = draft;
   }catch(e){}
 
+  // Task center uses operation-based CAS, never a stale full-board overwrite.
+  var tcCommitBusy = false;
+  function tcReload(){return new Promise(function(resolve,reject){fetchBoard(function(row,reached){if(!row||!reached){reject(new Error('未能連接共用資料庫，請保留輸入再試。'));return;}if(dirty||persistBusy){reject(new Error('原有改動仍在儲存，請稍後再試。'));return;}applyState(row);baseTs=row.updated_at;cacheSave(row);render();resolve(row);});});}
+  async function tcCommit(op){
+    if(tcCommitBusy||persistBusy||dirty)throw new Error('其他改動仍在儲存，請稍候再試。');
+    tcCommitBusy=true;
+    try{
+      for(var attempt=0;attempt<5;attempt++){
+        var row=await new Promise(function(resolve,reject){fetchBoard(function(r,ok){if(!ok||!r||!r.updated_at)reject(new Error('讀取失敗，沒有更改任務。'));else resolve(r);});});
+        var next=TaskCore.apply(TaskCore.clone(row.state),op);
+        var controller=new AbortController(), timeout=setTimeout(function(){controller.abort();},15000);
+        var res;try{res=await fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(row.updated_at),{signal:controller.signal,method:'PATCH',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'x-client-info':BKEY,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({state:next,updated_at:new Date().toISOString()})});}catch(err){var confirm=await new Promise(function(resolve){fetchBoard(function(r){resolve(r);});});if(confirm&&confirm.state.taskCenter?.history?.some(function(h){return h.id===op.id;})){applyState(confirm);baseTs=confirm.updated_at;cacheSave(confirm);render();return;}throw new Error('未能確認儲存結果；請重新載入查看，避免重複記錄。');}finally{clearTimeout(timeout);}
+        if(!res.ok)throw new Error('儲存失敗，沒有顯示為已完成。請重試。');
+        var rows=await res.json();if(!rows.length)continue;
+        applyState(rows[0]);baseTs=rows[0].updated_at;cacheSave(rows[0]);setSync('ok','共用任務已儲存');render();return;
+      }
+      throw new Error('其他裝置正在更新，請稍後重試。');
+    }finally{tcCommitBusy=false;}
+  }
+  WBHTaskUI.mount({state:function(){return state;},active:function(){return curView==='tasks';},commit:tcCommit,reload:tcReload});
+
   // ---------- boot ----------
   setInterval(function(){ try{ $('dateLine').innerHTML = fmtHeader(); }catch(e){} }, 20000);
   // 09-21：每分鐘重畫「回覆」版，令卡死警號嘅分鐘數會自己行，唔使等新資料入嚟。
   setInterval(function(){ try{ if(curView === 'sm') renderSM(); }catch(e){} }, 60000);
-  var startView = 'sched';
-  try{ startView = localStorage.getItem('view') || 'sched'; }catch(e){}
+  var startView = 'tasks';
+  try{ startView = 'tasks'; }catch(e){}
   moneyOpen = true;
-  if(startView === 'done') startView = 'tasks';
+  if(startView === 'done' || startView === 'sched') startView = 'tasks';
   setView(['sched','tasks','notes','social','money','ads','leads','wb','sm','emails'].indexOf(startView) >= 0 ? startView : 'sched');
   var retryTimer = null;
   async function boot(){
