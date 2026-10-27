@@ -2,7 +2,7 @@
 // 作用：令 Android Chrome 可以「安裝應用程式」（真獨立視窗）＋斷網時仲有圖示。
 // 🔴 鐵律：HTML 一律行網絡，永遠唔准食快取——唔係版本自檢會見唔到新版，
 //    就會翻返 09-06 嗰個「手機死抱舊版」嘅坑。
-const CACHE = 'wbh-assets-v1';
+const CACHE = 'wbh-assets-v2';
 
 self.addEventListener('install', function(e){ self.skipWaiting(); });
 self.addEventListener('activate', function(e){
