@@ -897,7 +897,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v11.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v11.2</span></div>
 </div>
 
 <div class="capture">
@@ -913,10 +913,25 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
   'use strict';
   // 共用雲端資料庫（Supabase）——你同曉明同一個 app、實時同步
   var SB = 'https://lvwspnjysfyomuszzjay.supabase.co';
-  var SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2d3Nwbmp5c2Z5b211c3p6amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0ODIxMzIsImV4cCI6MjEwMTA1ODEzMn0.fmrc8DlO1UXcsLnUdhTG6IZyxv1kZEVP8jSEIQgf2d4';
+  // Publishable key（取代舊 anon JWT）。呢條唔係 JWT，只放 apikey header。
+  // Authorization: Bearer 只會喺把鎖本身係 JWT（例如用戶 session，開頭 eyJ）先加。唔解碼條 key。
+  // RLS 仍然係 anon 角色 + x-client-info 暗號。
+  var SBK = 'sb_publishable_YROUDaSxinrbHH4g7q8gmQ_4za7Ohfj';
 
   var BKEY = '';
   try{ BKEY = localStorage.getItem('boardKey') || ''; }catch(e){}
+  function sbHeaders(extra){
+    var headers = {apikey:SBK, 'x-client-info':BKEY};
+    if(extra){
+      for(var k in extra){
+        if(Object.prototype.hasOwnProperty.call(extra, k)) headers[k] = extra[k];
+      }
+    }
+    if(!headers.Authorization && typeof SBK === 'string' && SBK.indexOf('eyJ') === 0){
+      headers.Authorization = 'Bearer ' + SBK;
+    }
+    return headers;
+  }
   var keyDialogPromise = null;
   function askKey(msg){
     if(keyDialogPromise) return keyDialogPromise;
@@ -1831,7 +1846,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
         var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
         var timer=setTimeout(function(){if(ctrl)ctrl.abort();},12000);
         fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(row.updated_at),{
-          method:'PATCH',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'x-client-info':BKEY,'Content-Type':'application/json',Prefer:'return=representation'},
+          method:'PATCH',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=representation'}),
           body:JSON.stringify({state:merged,updated_at:new Date().toISOString()}),signal:ctrl?ctrl.signal:undefined
         }).then(function(r){if(!r.ok)throw Error('save');return r.json();}).then(function(rows){
           clearTimeout(timer);
@@ -2632,8 +2647,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
     var expectedTs = baseTs;
     var sentRevision = mutationRevision;
     var sentState = JSON.parse(JSON.stringify(state));
-    var hdr = {apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY, 'Content-Type':'application/json',
-               Prefer:'resolution=merge-duplicates,return=representation'};
+    var hdr = sbHeaders({'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=representation'});
     var nowIso = new Date().toISOString();
     var req = fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(expectedTs),
               {method:'PATCH', headers:hdr, body: JSON.stringify({state:sentState, updated_at:nowIso})});
@@ -2688,7 +2702,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
       cb(null, false);
     }, 12000);
     fetch(SB+'/rest/v1/wbh_board?id=eq.main&select=state,updated_at', {
-      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY},
+      headers:sbHeaders(),
       signal: ctrl ? ctrl.signal : undefined
     }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(rows){
@@ -2713,7 +2727,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
       cb(null);
     }, 12000);
     fetch(SB+'/rest/v1/wbh_board?id=eq.main&select=updated_at', {
-      headers:{apikey:SBK, Authorization:'Bearer '+SBK, 'x-client-info':BKEY},
+      headers:sbHeaders(),
       signal: ctrl ? ctrl.signal : undefined
     }).then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(rows){
@@ -2959,7 +2973,7 @@ window.WBHTaskUI={mount(a){api=a;root=document.createElement('section');root.id=
         var row=await new Promise(function(resolve,reject){fetchBoard(function(r,ok){if(!ok||!r||!r.updated_at)reject(new Error('讀取失敗，沒有更改任務。'));else resolve(r);});});
         var next=TaskCore.apply(TaskCore.clone(row.state),op);
         var controller=new AbortController(), timeout=setTimeout(function(){controller.abort();},15000);
-        var res;try{res=await fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(row.updated_at),{signal:controller.signal,method:'PATCH',headers:{apikey:SBK,Authorization:'Bearer '+SBK,'x-client-info':BKEY,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({state:next,updated_at:new Date().toISOString()})});}catch(err){var confirm=await new Promise(function(resolve){fetchBoard(function(r){resolve(r);});});if(confirm&&confirm.state.taskCenter?.history?.some(function(h){return h.id===op.id;})){applyState(confirm);baseTs=confirm.updated_at;cacheSave(confirm);render();return;}throw new Error('未能確認儲存結果；請重新載入查看，避免重複記錄。');}finally{clearTimeout(timeout);}
+        var res;try{res=await fetch(SB+'/rest/v1/wbh_board?id=eq.main&updated_at=eq.'+encodeURIComponent(row.updated_at),{signal:controller.signal,method:'PATCH',headers:sbHeaders({'Content-Type':'application/json',Prefer:'return=representation'}),body:JSON.stringify({state:next,updated_at:new Date().toISOString()})});}catch(err){var confirm=await new Promise(function(resolve){fetchBoard(function(r){resolve(r);});});if(confirm&&confirm.state.taskCenter?.history?.some(function(h){return h.id===op.id;})){applyState(confirm);baseTs=confirm.updated_at;cacheSave(confirm);render();return;}throw new Error('未能確認儲存結果；請重新載入查看，避免重複記錄。');}finally{clearTimeout(timeout);}
         if(!res.ok)throw new Error('儲存失敗，沒有顯示為已完成。請重試。');
         var rows=await res.json();if(!rows.length)continue;
         applyState(rows[0]);baseTs=rows[0].updated_at;cacheSave(rows[0]);setSync('ok','共用任務已儲存');render();return;
