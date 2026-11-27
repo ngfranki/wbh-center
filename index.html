@@ -737,7 +737,7 @@
     諗到嘢即刻喺下面寫低・撳個圈＝完成・✕ 撳兩下＝刪<br>
     喺 Telegram 同 Eva 講「記 ＋你想記嘅嘢」都會入到嚟
   </div>
-  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v11.3.1</span></div>
+  <div style="margin-top:14px; font-size:11px; color:var(--muted); text-align:center; letter-spacing:.05em">© Wholistic Beauty and Health · <span id="verTag">v11.3.2</span></div>
 </div>
 
 <div class="capture">
@@ -2115,7 +2115,7 @@
     }
     var age=now-Date.parse(d.checkedAt),fresh=isFinite(age)&&age>=-300000&&age<3*3600000;
     $('emailStamp').textContent='Kajabi 核對：'+emailDate(d.checkedAt)+'（香港時間）';
-    $('emailFresh').textContent=fresh ? '每小時更新；Mac 需要開機連線。以下只讀取排程，不會發送電郵。' : '資料超過 3 小時未更新或時間不明，請先核對 Kajabi；以下保留上次快照，不能當成最新排程。';
+    $('emailFresh').textContent=fresh ? '每小時由雲端（Zo）更新 Kajabi 排程；唔使開 Mac。以下只讀取排程，不會發送電郵。' : '資料超過 3 小時未更新或時間不明，請先核對 Kajabi；以下保留上次快照，不能當成最新排程。';
     $('emailFresh').className='email-notice'+(fresh?'':' email-warn');
     var filter=$('emailFilter').value || 'all';
     var opened={};box.querySelectorAll('details[data-email-group][open]').forEach(function(el){opened[el.getAttribute('data-email-group')]=true;});
@@ -2438,9 +2438,16 @@
     }).join('');
     $('schedList').innerHTML = h;
     // 🔴 09-11：時間表舊咗＝「唔好信呢版」嘅警告，應該出喺呢版度，唔係日日 Telegram 嘈 Franki
-    var eu = state.meta.eventsUpdated, st = $('schedStamp');
-    if(!eu){ st.innerHTML = '<span style="color:var(--danger)">未同步過</span>'; }
-    else {
+    var st = $('schedStamp');
+    var precise = sectionStampOf('events');
+    if(precise && !/^\d{4}-\d{2}-\d{2}$/.test(precise)){
+      st.innerHTML = stampHtml(precise, 36*3600000);
+    } else if(!precise){
+      st.innerHTML = '<span style="color:var(--danger)">未同步過</span>';
+    } else {
+      // Date-only sectionUpdated.events wins over meta.eventsUpdated. A heartbeat
+      // must not turn a stale section date into「今日更新」.
+      var eu = precise;
       var age = Math.round((new Date(today+'T12:00:00') - new Date(eu+'T12:00:00')) / 864e5);
       st.innerHTML = age <= 0 ? nw('Eva 今日更新')
         : age === 1 ? nw('Eva ' + mmdd(eu) + ' 更新')
@@ -2462,7 +2469,7 @@
              '</div></div>';
     }
     function fill(listId, stampId, arr, emptyTxt){
-      $(stampId).textContent = arr.length ? arr.length + ' 條' : '';
+      $(stampId).innerHTML = (arr.length ? arr.length + ' 條 · ' : '') + stampHtml(sectionStampOf('intel'), 36*3600000);
       $(listId).innerHTML = arr.length
         ? arr.slice(0,6).map(card).join('')
         : '<div class="card"><div class="empty">' + emptyTxt + '</div></div>';
@@ -2555,7 +2562,7 @@
   var baseTs = null, persistRetry = 0;
 
   // 🔴 v6.4 合併規則：寫入前攞後台最新版做底，只疊自己改過嘅嘢上去——
-  //   後台擁有：ads／intel／events／meta（永遠用後台）
+  //   後台擁有：ads／intel／events／meta／sectionUpdated（永遠用後台；sectionUpdated 唔跟 row updated_at）
   //   共同擁有：tasks（逐項按 id 合併，邊個改得新邊個贏；Eva 推進咗嘅狀態一律吸收）
   //             notes／weekly（聯集，唔會冚走 Eva 寫嘅紀錄）
   //   本機擁有：income（只有 app 會改）
@@ -2579,6 +2586,7 @@
     if(!out.ads) out.ads = local.ads || {};
     if(myReq && tsOf(myReq) > tsOf(out.ads.updatedAt)) out.ads.req = myReq;
     if(!out.intel && local.intel) out.intel = local.intel;
+    // sectionUpdated is backend-owned; keep the remote copy from the clone above.
     // leads：名單由 Eva 後台整理（後台為準），但每個人嘅「搵咗未」狀態係兩邊都改得，按 at 日期夾
     if(local.leads || out.leads){
       var lo = out.leads || local.leads;
@@ -2777,6 +2785,53 @@
   // 2026-09-27：慳流量。以前每 5 秒攞成份 195 KB 返嚟先比較，一個分頁開住一日半
   // 就用爆 Supabase 一個月嘅 5 GB。而家先問「最後更新時間」（幾十 bytes），
   // 真係變咗先攞全份。你睇到嘅嘢一樣係最新，只係唔再重複攞同一份嘢。
+
+  // Per-section freshness. Row-level updated_at is only for refetch/CAS.
+  // The SaleSmartly/VPS heartbeat bumps the row clock and must not make stale intel look fresh.
+  function sectionStampOf(name){
+    var s = state && state.sectionUpdated;
+    if(s && s[name]) return s[name];
+    if(name==='ads' && state.ads && state.ads.updatedAt) return state.ads.updatedAt;
+    if(name==='email' && state.emailSchedule && state.emailSchedule.checkedAt) return state.emailSchedule.checkedAt;
+    if(name==='wb' && state.wb && state.wb.updatedAt) return state.wb.updatedAt;
+    if(name==='sm' && state.sm && state.sm.updatedAt) return state.sm.updatedAt;
+    if(name==='events' && state.meta && state.meta.eventsUpdated) return state.meta.eventsUpdated;
+    return null;
+  }
+  function fmtSectionStamp(ts){
+    if(!ts) return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(ts)) return mmdd(ts);
+    var n = Date.parse(ts);
+    if(!isFinite(n)) return '';
+    // Same month/day order as mmdd() on this board, plus Hong Kong hour and minute.
+    var parts = new Intl.DateTimeFormat('en-US', {
+      timeZone:'Asia/Hong_Kong', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hourCycle:'h23'
+    }).formatToParts(new Date(n));
+    var map = {};
+    parts.forEach(function(p){ map[p.type] = p.value; });
+    if(!map.month || !map.day || !map.hour || !map.minute) return '';
+    return map.month+'/'+map.day+' '+map.hour+':'+map.minute;
+  }
+  function sectionAgeMs(ts){
+    if(!ts) return Infinity;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(ts)){
+      var noon = Date.parse(ts+'T12:00:00+08:00');
+      return isFinite(noon) ? Date.now()-noon : Infinity;
+    }
+    var n=Date.parse(ts);
+    return isFinite(n) ? Date.now()-n : Infinity;
+  }
+  function stampHtml(ts, freshMs){
+    var label=fmtSectionStamp(ts);
+    if(!label) return '<span style="color:var(--danger)">未同步過</span>';
+    var age=sectionAgeMs(ts);
+    if(isFinite(age) && age>(freshMs||36*3600000))
+      return '<span style="color:var(--danger)">⚠️ '+nw(label)+' 更新・之後未再核</span>';
+    return nw('Eva '+label+' 更新');
+  }
+
+  // Row updated_at only answers "did any section change, should I refetch?"
   function fetchStamp(cb){
     var done = false, ctrl = null;
     try{ ctrl = new AbortController(); }catch(e){}
